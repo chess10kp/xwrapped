@@ -6,7 +6,7 @@
 
 ---
 
-The **xwrapped** app enriches each wrapped with **Exa** web search (via `exa-js` and `EXA_API_KEY` in `.env`) alongside Apify tweet data — see `searchWebContextForPerson` in `src/lib/server/exa.ts` and the pipeline in `src/lib/server/pipeline.ts`.
+The **xwrapped** app enriches each wrapped with **Exa** web search (via `exa-js` and `EXA_API_KEY` in `.env`) alongside stub tweet data for development — see `searchWebContextForPerson` in `src/lib/server/exa.ts` and the pipeline in `src/lib/server/pipeline.ts`.
 
 ---
 

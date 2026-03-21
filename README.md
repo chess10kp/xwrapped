@@ -8,7 +8,6 @@ Generate personalized X (Twitter) personality wrapped experiences with AI-powere
 - **Svelte 5** - UI framework with runes
 - **TypeScript** - Type safety
 - **TailwindCSS v4** - Styling
-- **Apify** - Twitter scraping (optional; stub data when disabled)
 - **Exa** - Neural web search for public context alongside tweets (optional)
 - **OpenRouter** - AI personality analysis (`openrouter/free` model)
 - **MagicHour** - Video generation
@@ -43,8 +42,6 @@ cp .env.example .env
 Edit `.env` with your values:
 
 ```env
-USE_APIFY=
-APIFY_API_TOKEN=
 OPENROUTER_API_KEY=
 EXA_API_KEY=
 MAGIC_HOUR_API_KEY=
@@ -55,12 +52,10 @@ PUBLIC_BASE_URL=http://localhost:5173
 
 - **`OPENROUTER_API_KEY`** — Required for personality analysis. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
 - **`MONGODB_URI`** — Required for storing jobs and results. Test with `npm run verify:mongo`.
-- **`USE_APIFY`** — Set to `true` to scrape live X data via Apify (`APIFY_API_TOKEN` required). If unset or false, the pipeline uses **stub** profile and tweet data for local development.
 - **`EXA_API_KEY`** — Optional. When set, the pipeline runs Exa web search to enrich analysis with public web context. If missing, generation still runs without that step.
 
 ### Getting API Keys
 
-- **Apify**: [console.apify.com/settings/integrations](https://console.apify.com/settings/integrations)
 - **OpenRouter**: [openrouter.ai/keys](https://openrouter.ai/keys)
 - **Exa**: [dashboard.exa.ai/api-keys](https://dashboard.exa.ai/api-keys)
 - **MagicHour**: [magichour.ai/developer?tab=api-keys](https://magichour.ai/developer?tab=api-keys)
@@ -103,7 +98,6 @@ xwrapped/
 ├── src/
 │   ├── lib/
 │   │   ├── server/
-│   │   │   ├── scraper.ts       # Apify Twitter scraping
 │   │   │   ├── analyser.ts      # OpenRouter personality analysis
 │   │   │   ├── exa.ts           # Optional Exa web search
 │   │   │   ├── magichour.ts     # MagicHour video generation
@@ -129,7 +123,7 @@ xwrapped/
 ## How It Works
 
 1. **User enters handle** → Client validates and POSTs to `/api/generate`
-2. **Scraping phase** → With `USE_APIFY=true`, Apify fetches profile + up to 50 recent tweets; otherwise stub data is used
+2. **Data phase** → Loads `{handle}_tweets_*.txt` from the project root when present; otherwise stub profile + tweets (or import into MongoDB via `npm run import-tweets`)
 3. **Analysis phase** → OpenRouter analyzes personality and generates an archetype (optionally grounded with Exa when `EXA_API_KEY` is set)
 4. **Video generation** → MagicHour creates a cinematic video from the analysis
 5. **Results** → User is redirected to `/profile/<handle>` for video, stats, share, and download
