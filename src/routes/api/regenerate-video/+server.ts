@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { store } from '$lib/server/db';
 import { isMagicHourConfigured } from '$lib/server/magichour';
-import { processVideoBackfill } from '$lib/server/pipeline';
+import { processMediaBackfill } from '$lib/server/pipeline';
 
 const log = (...args: unknown[]) => console.log('[api/regenerate-video]', ...args);
 
@@ -35,12 +35,12 @@ export async function POST({ request }) {
 		return json({ error: 'Wrap is still processing' }, { status: 409 });
 	}
 
-	log('clear stored video + queue', { id: cleaned });
-	await store.clearStoredVideo(cleaned);
+	log('clear stored Magic Hour media + queue', { id: cleaned });
+	await store.clearStoredMedia(cleaned);
 
-	const claimed = await store.claimVideoBackfill(cleaned);
+	const claimed = await store.claimMediaBackfill(cleaned);
 	if (claimed) {
-		processVideoBackfill(cleaned);
+		processMediaBackfill(cleaned);
 	}
 
 	return json({ ok: true, id: cleaned });

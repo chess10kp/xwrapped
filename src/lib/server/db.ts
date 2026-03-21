@@ -39,18 +39,30 @@ export class Store {
 	}
 
 	/**
-	 * Atomically move a completed wrap (no video yet, no prior video failure) to `generating`
+	 * Atomically move a completed wrap with missing Magic Hour media to `generating`
 	 * so only one backfill run is queued. Returns true if this request claimed the job.
 	 */
-	async claimVideoBackfill(id: string): Promise<boolean> {
+	async claimMediaBackfill(id: string): Promise<boolean> {
 		const db = await getDb();
 		const res = await db.collection<WrappedMongoDoc>(COLLECTION).updateOne(
 			{
 				_id: id,
 				status: 'complete',
 				analysis: { $exists: true },
-				videoUrl: { $exists: false },
-				$or: [{ videoError: { $exists: false } }, { videoError: '' }]
+				$or: [
+					{
+						$and: [
+							{ videoUrl: { $exists: false } },
+							{ $or: [{ videoError: { $exists: false } }, { videoError: '' }] }
+						]
+					},
+					{
+						$and: [
+							{ audioUrl: { $exists: false } },
+							{ $or: [{ audioError: { $exists: false } }, { audioError: '' }] }
+						]
+					}
+				]
 			},
 			{ $set: { status: 'generating' } }
 		);
@@ -58,11 +70,11 @@ export class Store {
 	}
 
 	/** Remove persisted Magic Hour fields so a new render can run (same analysis). */
-	async clearStoredVideo(id: string): Promise<void> {
+	async clearStoredMedia(id: string): Promise<void> {
 		const db = await getDb();
 		await db.collection<WrappedMongoDoc>(COLLECTION).updateOne(
 			{ _id: id },
-			{ $unset: { videoUrl: '', videoError: '' } }
+			{ $unset: { videoUrl: '', videoError: '', audioUrl: '', audioError: '', voiceoverVoice: '' } }
 		);
 	}
 }

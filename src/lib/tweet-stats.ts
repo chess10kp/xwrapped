@@ -118,11 +118,11 @@ export function aggregateTweetStats(tweets: TweetData[] | undefined): TweetAggre
 	const n = list.length;
 	const topHashtags = [...tagCounts.entries()]
 		.sort((a, b) => b[1] - a[1])
-		.slice(0, 8)
+		.slice(0, 5)
 		.map(([tag, count]) => ({ tag, count }));
 	const topMentions = [...mentionCounts.entries()]
 		.sort((a, b) => b[1] - a[1])
-		.slice(0, 8)
+		.slice(0, 5)
 		.map(([handle, count]) => ({ handle, count }));
 
 	return {

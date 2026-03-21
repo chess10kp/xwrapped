@@ -68,16 +68,16 @@
 	}
 </script>
 
-<div class="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-16">
+<div class="flex min-h-dvh flex-col items-center justify-center px-6 py-16">
 	<div class="w-full">
 		<div class="flex flex-col items-center gap-8">
 			<!-- X Logo -->
-			<div class="text-6xl font-bold text-[#e7e9ea]">𝕏</div>
+			<div class="text-7xl font-bold text-[#e7e9ea]">𝕏</div>
 
 			<!-- Title -->
 			<div class="text-center">
-				<h1 class="text-4xl font-extrabold text-[#1d9bf0]">Wrapped</h1>
-				<p class="mt-2 text-[#71767b]">Discover your X personality archetype</p>
+				<h1 class="text-5xl font-extrabold text-[#1d9bf0]">Wrapped</h1>
+				<p class="mt-2 text-base text-[#71767b]">Discover your X personality archetype</p>
 			</div>
 
 			<!-- Input -->
@@ -91,7 +91,7 @@
 						bind:value={handle}
 						placeholder="elonmusk"
 						disabled={isLoading}
-						class="w-full rounded-full bg-[#202327] py-3 pl-9 pr-4 text-[#e7e9ea] placeholder-[#71767b] outline-none transition-colors focus:ring-2 focus:ring-[#1d9bf0] disabled:opacity-50"
+						class="w-full rounded-full bg-[#202327] py-3 pl-9 pr-4 text-base text-[#e7e9ea] placeholder-[#71767b] outline-none transition-colors focus:ring-2 focus:ring-[#1d9bf0] disabled:opacity-50"
 						onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
 					/>
 				</div>
@@ -99,7 +99,7 @@
 
 			<!-- Error -->
 			{#if error}
-				<p class="text-sm text-[#f4212e]">{error}</p>
+				<p class="text-base text-[#f4212e]">{error}</p>
 			{/if}
 
 			<!-- Button -->
@@ -107,7 +107,7 @@
 				type="button"
 				onclick={handleSubmit}
 				disabled={isLoading}
-				class="flex items-center gap-2 rounded-full bg-[#1d9bf0] px-8 py-3 font-bold text-white transition-colors hover:bg-[#1a8cd8] disabled:opacity-50"
+				class="flex items-center gap-2 rounded-full bg-[#1d9bf0] px-8 py-3 text-base font-bold text-white transition-colors hover:bg-[#1a8cd8] disabled:opacity-50"
 			>
 				{#if isLoading}
 					<svg class="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">

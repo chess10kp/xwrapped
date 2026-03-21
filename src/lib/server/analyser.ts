@@ -1,5 +1,6 @@
 import { OPENROUTER_API_KEY } from '$lib/server/env.server';
 import type { ProfileData, TweetData, PersonalityAnalysis } from './types';
+import { aggregateTweetStats } from '$lib/tweet-stats';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 /** OpenRouter free-tier router — https://openrouter.ai/docs/guides/routing/routers/free-models-router */
@@ -68,16 +69,45 @@ function parsePersonalityJson(text: string): PersonalityAnalysis {
   }
 }
 
-function buildPrompt(profile: ProfileData, tweets: TweetData[]): string {
+function buildPrompt(
+  profile: ProfileData,
+  tweets: TweetData[],
+  webSearchContext?: string | null
+): string {
+  const tweetAgg = aggregateTweetStats(tweets);
   const tweetTexts = tweets
     .map((t, i) => `[${i+1}] "${t.text}" (${t.likeCount} likes, ${new Date(t.createdAt).toLocaleDateString()})`)
     .join('\n');
 
+  const webTrim = webSearchContext?.trim() ?? '';
+  const webSection = webTrim
+    ? `## Public web context (Exa — exactly one third-party result; may be incomplete or outdated)
+${webTrim}
+
+`
+    : '';
+
   return `You are an expert personality analyst. Analyse this X (Twitter) user's public profile and recent tweets. Return ONLY valid JSON matching this exact schema — no markdown, no explanation.
 
-Writing style for ALL string fields: sound like a sharp human, not a brochure. Be concrete. Never use filler phrases, buzzwords, or "AI voice" (e.g. avoid: delve, tapestry, landscape, journey, unlock, navigate, realm, vibrant, robust, in today's world, at the end of the day, it goes without saying).
+Writing style for ALL string fields: write like Spotify Wrapped talking directly to the person. Use second person. Short punchy sentences. Celebratory but slightly roast-y. Confident, never hedging. Informal, like a hype friend who has read every tweet and has opinions.
 
-For archetype and especially vibe_summary: infer how they come across from their tweets — topics, voice, habits. The official bio is optional context only; do not let it override what the posts actually show.
+Hard rules for tone:
+- Never write in third person about the user.
+- Never hedge with phrases like "it seems", "it appears", "probably", "maybe", "arguably", or "might".
+- Never sound formal, balanced, academic, or HR-coded.
+- Never use filler phrases, buzzwords, or "AI voice" (e.g. avoid: delve, tapestry, landscape, journey, unlock, navigate, realm, vibrant, robust, in today's world, at the end of the day, it goes without saying).
+- Be specific. Pick a read and commit to it.
+- Keep each prose field to no more than 3 sentences. Shorter is better.
+
+For archetype, archetype_description, and especially vibe_summary: infer how they come across from their tweets — topics, voice, habits. The official bio is optional context only; do not let it override what the posts actually show.
+
+If the Exa result adds a concrete detail that clearly matches the tweets, weave that detail into vibe_summary or posting_style. Use it as extra color, not as the main source of truth. If it conflicts with the tweets, ignore it.
+
+Write vibe_summary in second person, like a friend who knows them a little too well. Slightly roast-y is good. Observant is better than mean. It should feel alive, not analytical.
+
+Write archetype_description like a tiny Pokedex entry or horoscope blurb. Exactly two short sentences. Sentence one should name or frame the archetype. Sentence two should land the joke or tell on their habits.
+
+Write metric_comparisons like Spotify Wrapped factoids. One short sentence per metric. Funny, vivid, culturally recognizable. Always write them in second person, talking directly to "you". Never say "he", "she", "they", "this user", or refer to the person indirectly. Treat the followers metric as a witty follow-up to a percentile estimate, not a raw follower-count repeat. Comparisons can be approximate, but they should still feel broadly plausible. No disclaimers, no math working, no "roughly speaking", no "that's like". Just land the line.
 
 ## Profile
 - Handle: @${profile.username}
@@ -90,24 +120,42 @@ For archetype and especially vibe_summary: infer how they come across from their
 
 ## Recent Tweets (${tweets.length} total)
 ${tweetTexts}
-
-## Required JSON Output Schema
+## Metric inputs for comparison lines
+- followers: ${profile.followers}
+- following: ${profile.following}
+- lifetime_posts: ${profile.tweetsCount}
+- posts_analysed: ${tweets.length}
+- peak_hour: ${tweets.length > 0 ? 'infer from tweet timestamps' : 'unknown'}
+- total_likes_on_analysed_posts: ${tweetAgg.totalLikes}
+- avg_views_per_analysed_post: ${tweetAgg.avgViews}
+${webSection}## Required JSON Output Schema
 {
   "archetype": "A creative 2-6 word persona label like 'The Midnight Ranter' or 'The Thread Architect' — specific to their tweets, not generic",
+  "archetype_description": "Exactly two short sentences of lore for the archetype, written like a witty Pokedex entry or horoscope blurb",
+  "metric_comparisons": {
+    "followers": "One short funny follow-up line for their estimated follower percentile on X, written in second person",
+    "following": "One short funny comparison line for the following count, written in second person, even if it may not be displayed everywhere",
+    "lifetime_posts": "One short funny comparison line for the total post count, written in second person, even if it may not be displayed everywhere",
+    "posts_analysed": "One short funny comparison line for how many posts were analysed in this wrap, written in second person, even if it may not be displayed everywhere",
+    "peak_hour": "One short funny comparison line for peak posting time, written in second person",
+    "total_likes": "One short funny comparison line for total likes across analysed posts, written in second person",
+    "avg_views": "One short funny comparison line for average views per analysed post, written in second person"
+  },
   "top_topics": ["topic1", "topic2", "topic3"],
   "tone": "One word: e.g. sardonic, earnest, chaotic, analytical, wholesome",
-  "posting_style": "One sentence describing HOW they post (thread lover, hot take machine, etc)",
+  "posting_style": "One or two short sentences describing HOW they post. Same second-person, punchy, confident tone as the rest.",
   "peak_hour": "Best guess of their most active posting time, e.g. '2am'",
   "best_tweet": "Copy the single most characteristic/engaging tweet verbatim",
-  "best_tweet_why": "One sentence on why this tweet captures their essence",
-  "vibe_summary": "Exactly two short sentences: what this account reads as from the tweets alone — voice, fixations, how they show up in the feed. Ground it in the posts, not the bio. No hype, no trailer narration, no summary-of-a-summary.",
+  "best_tweet_why": "One short confident sentence on why this tweet captures their essence",
+  "vibe_summary": "Exactly two or three short sentences in second person: what this account reads as from the tweets alone — voice, fixations, how they show up in the feed. Ground it in the posts, not the bio. Slightly roast-y, like a perceptive friend. No hype trailer narration. No detached analysis.",
   "colour_mood": "A visual mood for video generation: e.g. 'neon cyberpunk', 'warm sunset', 'dark academia'"
 }`;
 }
 
 export async function analysePersonality(
   profile: ProfileData,
-  tweets: TweetData[]
+  tweets: TweetData[],
+  webSearchContext?: string | null
 ): Promise<PersonalityAnalysis> {
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -120,7 +168,7 @@ export async function analysePersonality(
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 2048,
-      messages: [{ role: 'user', content: buildPrompt(profile, tweets) }]
+      messages: [{ role: 'user', content: buildPrompt(profile, tweets, webSearchContext) }]
     })
   });
 

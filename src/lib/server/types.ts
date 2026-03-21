@@ -21,8 +21,20 @@ export interface TweetData {
   mentions: string[];
 }
 
+export interface MetricComparisons {
+  followers?: string;
+  following?: string;
+  lifetime_posts?: string;
+  posts_analysed?: string;
+  peak_hour?: string;
+  total_likes?: string;
+  avg_views?: string;
+}
+
 export interface PersonalityAnalysis {
   archetype: string;
+  archetype_description?: string;
+  metric_comparisons?: MetricComparisons;
   top_topics: string[];
   tone: string;
   posting_style: string;
@@ -45,6 +57,13 @@ export interface WrappedResult {
   videoUrl?: string;
   /** Set when Magic Hour failed so we do not retry on every page load */
   videoError?: string;
+  audioUrl?: string;
+  /** Voice chosen for the generated summary narration. */
+  voiceoverVoice?: string;
+  /** Set when Magic Hour audio failed so we do not retry on every page load. */
+  audioError?: string;
   error?: string;
+  /** Exa neural search highlights for public-web grounding (LLM + video prompts). */
+  webSearchContext?: string;
   createdAt: Date;
 }

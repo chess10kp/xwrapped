@@ -6,9 +6,10 @@ import {
   repoTweetsAsTweetData,
 } from "./repo-tweet-export";
 import { stubProfile, stubTweets } from "./stub-x-data";
-import type { ProfileData, TweetData } from "./types";
+import type { ProfileData, TweetData, WrappedResult } from "./types";
 import { analysePersonality } from "./analyser";
-import { generateWrappedVideo, isMagicHourConfigured } from "./magichour";
+import { isExaConfigured, searchWebContextForPerson } from "./exa";
+import { generateWrappedVideo, generateWrappedVoiceover, isMagicHourConfigured } from "./magichour";
 import { TWITTERAPI_IO_KEY } from "$lib/server/env.server";
 import {
   fetchTwitterUserProfile,
@@ -18,38 +19,82 @@ import {
 
 const log = (...args: unknown[]) => console.log("[pipeline]", ...args);
 
-/** Generate video for an existing completed wrap (e.g. backfill after adding MAGIC_HOUR_API_KEY). */
-export async function processVideoBackfill(handle: string): Promise<void> {
+/** Generate missing Magic Hour media for an existing completed wrap. */
+export async function processMediaBackfill(handle: string): Promise<void> {
   const id = handle.toLowerCase();
   const r = await store.get(id);
-  if (!r?.analysis || r.videoUrl) return;
+  if (
+    !r?.analysis ||
+    ((r.videoUrl || r.videoError?.trim()) && (r.audioUrl || r.audioError?.trim()))
+  ) {
+    return;
+  }
   try {
-    const videoUrl = await generateWrappedVideo(
-      r.analysis,
-      handle,
-      r.profile?.profilePicture,
-    );
-    log("video backfill ready", { id, urlLength: videoUrl.length });
-    await store.update(id, {
+    let webCtx = r.webSearchContext;
+    if (!webCtx?.trim() && r.profile && isExaConfigured()) {
+      const ctx = await searchWebContextForPerson(r.profile);
+      if (ctx) {
+        webCtx = ctx;
+        await store.update(id, { webSearchContext: ctx });
+        log("backfill: saved web context from Exa", { id, chars: ctx.length });
+      }
+    }
+    const mediaUpdates: Partial<WrappedResult> = {
       status: "complete",
       analysis: r.analysis,
-      videoUrl,
-      videoError: "",
-    });
-  } catch (videoErr) {
-    const message =
-      videoErr instanceof Error ? videoErr.message : String(videoErr);
-    console.error("[pipeline] video backfill failed", {
-      id,
-      handle,
-      error: videoErr,
-    });
-    await store.update(id, {
-      status: "complete",
-      analysis: r.analysis,
-      videoError: message.slice(0, 500),
-    });
-    log("backfill complete without video", { id, handle });
+    };
+
+    if (!r.videoUrl && !r.videoError?.trim()) {
+      try {
+        const videoUrl = await generateWrappedVideo(
+          r.analysis,
+          handle,
+          r.profile?.profilePicture,
+          webCtx,
+        );
+        log("video backfill ready", { id, urlLength: videoUrl.length });
+        mediaUpdates.videoUrl = videoUrl;
+        mediaUpdates.videoError = "";
+      } catch (videoErr) {
+        const message =
+          videoErr instanceof Error ? videoErr.message : String(videoErr);
+        console.error("[pipeline] video backfill failed", {
+          id,
+          handle,
+          error: videoErr,
+        });
+        mediaUpdates.videoError = message.slice(0, 500);
+      }
+    }
+
+    if (!r.audioUrl && !r.audioError?.trim()) {
+      try {
+        const audio = await generateWrappedVoiceover(r.analysis, handle);
+        log("audio backfill ready", {
+          id,
+          voice: audio.voiceoverVoice,
+          urlLength: audio.audioUrl.length,
+        });
+        mediaUpdates.audioUrl = audio.audioUrl;
+        mediaUpdates.voiceoverVoice = audio.voiceoverVoice;
+        mediaUpdates.audioError = "";
+      } catch (audioErr) {
+        const message =
+          audioErr instanceof Error ? audioErr.message : String(audioErr);
+        console.error("[pipeline] audio backfill failed", {
+          id,
+          handle,
+          error: audioErr,
+        });
+        mediaUpdates.audioError = message.slice(0, 500);
+      }
+    }
+
+    await store.update(id, mediaUpdates);
+    log("backfill complete", { id, handle });
+  } catch (mediaErr) {
+    console.error("[pipeline] media backfill failed", { id, handle, error: mediaErr });
+    await store.update(id, { status: "complete" });
   }
 }
 
@@ -105,14 +150,23 @@ async function processHandle(id: string, handle: string): Promise<void> {
 
     log("scrape ok", { username: profile.username, tweetCount: tweets.length });
 
+    log("fetching public web context (Exa)…");
+    const webSearchContext = await searchWebContextForPerson(profile);
+    if (webSearchContext) {
+      log("web context ok", { chars: webSearchContext.length });
+    } else {
+      log("web context empty or skipped (set EXA_API_KEY for Exa search)");
+    }
+
     await store.update(id, {
       status: "analysing",
       profile,
       tweets,
+      ...(webSearchContext ? { webSearchContext } : {}),
     });
 
     log("analysing personality (OpenRouter)…");
-    const analysis = await analysePersonality(profile, tweets);
+    const analysis = await analysePersonality(profile, tweets, webSearchContext);
     log("analysis ok", { archetype: analysis.archetype });
 
     if (isMagicHourConfigured()) {
@@ -120,20 +174,22 @@ async function processHandle(id: string, handle: string): Promise<void> {
         status: "generating",
         analysis,
       });
+      const mediaUpdates: Partial<WrappedResult> = {
+        status: "complete",
+        analysis,
+      };
+
       log("generating video (Magic Hour)…");
       try {
         const videoUrl = await generateWrappedVideo(
           analysis,
           handle,
           profile.profilePicture,
+          webSearchContext,
         );
         log("video ready", { urlLength: videoUrl.length });
-        await store.update(id, {
-          status: "complete",
-          analysis,
-          videoUrl,
-          videoError: "",
-        });
+        mediaUpdates.videoUrl = videoUrl;
+        mediaUpdates.videoError = "";
       } catch (videoErr) {
         const msg =
           videoErr instanceof Error ? videoErr.message : String(videoErr);
@@ -142,15 +198,35 @@ async function processHandle(id: string, handle: string): Promise<void> {
           handle,
           error: videoErr,
         });
-        await store.update(id, {
-          status: "complete",
-          analysis,
-          videoError: msg.slice(0, 500),
-        });
+        mediaUpdates.videoError = msg.slice(0, 500);
         log("complete without video (Magic Hour error)", { id, handle });
       }
+
+      log("generating voiceover (Magic Hour)…");
+      try {
+        const audio = await generateWrappedVoiceover(analysis, handle);
+        log("voiceover ready", {
+          voice: audio.voiceoverVoice,
+          urlLength: audio.audioUrl.length,
+        });
+        mediaUpdates.audioUrl = audio.audioUrl;
+        mediaUpdates.voiceoverVoice = audio.voiceoverVoice;
+        mediaUpdates.audioError = "";
+      } catch (audioErr) {
+        const msg =
+          audioErr instanceof Error ? audioErr.message : String(audioErr);
+        console.error("[pipeline] voiceover generation failed", {
+          id,
+          handle,
+          error: audioErr,
+        });
+        mediaUpdates.audioError = msg.slice(0, 500);
+        log("complete without voiceover (Magic Hour error)", { id, handle });
+      }
+
+      await store.update(id, mediaUpdates);
     } else {
-      log("Magic Hour skipped — set MAGIC_HOUR_API_KEY in .env for AI video");
+      log("Magic Hour skipped — set MAGIC_HOUR_API_KEY in .env for AI video + audio");
       await store.update(id, {
         status: "complete",
         analysis,

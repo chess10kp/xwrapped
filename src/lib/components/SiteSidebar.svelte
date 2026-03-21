@@ -88,7 +88,7 @@
 					/>
 				</svg>
 			</span>
-			<span class="text-[11px] font-bold leading-none text-[#e7e9ea]">wrapped</span>
+			<span class="text-[12px] font-bold leading-none text-[#e7e9ea]">wrapped</span>
 		</span>
 		<span class="hidden items-center gap-1.5 xl:flex">
 			<span class="flex h-7 w-7 shrink-0 items-center justify-center" aria-hidden="true">
@@ -98,7 +98,7 @@
 					/>
 				</svg>
 			</span>
-			<span class="text-[15px] font-bold tracking-tight text-[#e7e9ea]">wrapped</span>
+			<span class="text-[16px] font-bold tracking-tight text-[#e7e9ea]">wrapped</span>
 		</span>
 	</a>
 
@@ -131,7 +131,7 @@
 					/>
 				{/if}
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Home</span>
+			<span class="hidden text-[21px] xl:inline">Home</span>
 		</a>
 
 		<!-- Explore -->
@@ -148,7 +148,7 @@
 					d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Explore</span>
+			<span class="hidden text-[21px] xl:inline">Explore</span>
 		</button>
 
 		<!-- Notifications -->
@@ -165,7 +165,7 @@
 					d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Notifications</span>
+			<span class="hidden text-[21px] xl:inline">Notifications</span>
 		</button>
 
 		<!-- Messages -->
@@ -182,7 +182,7 @@
 					d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Messages</span>
+			<span class="hidden text-[21px] xl:inline">Messages</span>
 		</button>
 
 		<!-- Grok -->
@@ -199,7 +199,7 @@
 					d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Grok</span>
+			<span class="hidden text-[21px] xl:inline">Grok</span>
 		</button>
 
 		<!-- Lists -->
@@ -216,7 +216,7 @@
 					d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm0 5.25h.007v.008H3.75v-.008zm0 5.25h.007v.008H3.75V18z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Lists</span>
+			<span class="hidden text-[21px] xl:inline">Lists</span>
 		</button>
 
 		<!-- Bookmarks -->
@@ -233,7 +233,7 @@
 					d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Bookmarks</span>
+			<span class="hidden text-[21px] xl:inline">Bookmarks</span>
 		</button>
 
 		<!-- Communities -->
@@ -250,7 +250,7 @@
 					d="M18 18.72a9.09 9.09 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Communities</span>
+			<span class="hidden text-[21px] xl:inline">Communities</span>
 		</button>
 
 		<!-- Premium -->
@@ -264,7 +264,7 @@
 					d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">Premium</span>
+			<span class="hidden text-[21px] xl:inline">Premium</span>
 		</button>
 
 		<!-- Profile -->
@@ -294,7 +294,7 @@
 						/>
 					{/if}
 				</svg>
-				<span class="hidden text-[20px] xl:inline">Profile</span>
+				<span class="hidden text-[21px] xl:inline">Profile</span>
 			</a>
 		{:else}
 			<button
@@ -310,7 +310,7 @@
 						d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
 					/>
 				</svg>
-				<span class="hidden text-[20px] xl:inline">Profile</span>
+				<span class="hidden text-[21px] xl:inline">Profile</span>
 			</button>
 		{/if}
 
@@ -328,7 +328,7 @@
 					d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M12 21a9 9 0 100-18 9 9 0 000 18z"
 				/>
 			</svg>
-			<span class="hidden text-[20px] xl:inline">More</span>
+			<span class="hidden text-[21px] xl:inline">More</span>
 		</button>
 	</nav>
 
@@ -336,7 +336,7 @@
 	<div class="mt-2 flex w-full flex-col items-center xl:items-stretch">
 		<button
 			type="button"
-			class="flex h-12 w-12 items-center justify-center rounded-full bg-[#1d9bf0] text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-[#1a8cd8] xl:h-[52px] xl:w-full xl:px-5 xl:text-[17px]"
+			class="flex h-12 w-12 items-center justify-center rounded-full bg-[#1d9bf0] text-[16px] font-bold text-white shadow-sm transition-colors hover:bg-[#1a8cd8] xl:h-[52px] xl:w-full xl:px-5 xl:text-[18px]"
 			aria-label="Post"
 		>
 			<svg viewBox="0 0 24 24" class="h-6 w-6 xl:hidden" fill="currentColor" aria-hidden="true">
@@ -360,15 +360,15 @@
 			pictureUrl={sidebarPictureUrl}
 			handle={sidebarHandle ?? 'xwrapped'}
 			sizeClass="h-10 w-10"
-			textClass="text-[15px]"
+			textClass="text-[16px]"
 			fallbackLabel={sidebarHandle ? sidebarHandle.slice(0, 2).toUpperCase() : 'XW'}
 			fallbackBgClass="bg-[#536471]"
 		/>
 		<span class="hidden min-w-0 flex-1 xl:block">
-			<span class="block truncate text-[15px] font-bold text-[#e7e9ea]">
+			<span class="block truncate text-[16px] font-bold text-[#e7e9ea]">
 				{sidebarHandle ? sidebarHandle : 'X Wrapped'}
 			</span>
-			<span class="block truncate text-[15px] text-[#71767b]">
+			<span class="block truncate text-[16px] text-[#71767b]">
 				@{sidebarHandle ? sidebarHandle : 'xwrapped'}
 			</span>
 		</span>

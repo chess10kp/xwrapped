@@ -1,91 +1,128 @@
 <script lang="ts">
-	import ProfileAvatar from '$lib/components/ProfileAvatar.svelte';
 	import ProfileWrappedRail from '$lib/components/ProfileWrappedRail.svelte';
+	import { aggregateTweetStats } from '$lib/tweet-stats';
+	import { canonicalProfileWrappedUrl, buildWrappedShareText, postOnXIntentUrl } from '$lib/share-wrapped';
+	import { browser } from '$app/environment';
+	import { page } from '$app/state';
 	import {
-		aggregateTweetStats,
-		formatCount,
-		matchTweetForBestText,
-		normTweetText
-	} from '$lib/tweet-stats';
-	import { goto } from '$app/navigation';
+		describeFollowerPercentile,
+		normalizeComparison,
+		describePeakHour,
+		describeTone
+	} from '$lib/wrapped-copy';
+	import { formatCount } from '$lib/tweet-stats';
 	import type { PageData } from './$types';
 
 	let { data } = $props<{ data: PageData }>();
 
-	let regenerateBusy = $state(false);
-	let regenerateErr = $state('');
+	let copyDone = $state(false);
+	let isVoiceoverPlaying = $state(false);
+	let voiceoverAudio = $state<HTMLAudioElement | undefined>(undefined);
+	let copyFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
-	async function regenerateVideo() {
-		regenerateErr = '';
-		regenerateBusy = true;
-		try {
-			const res = await fetch('/api/regenerate-video', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ handle: data.result.handle })
-			});
-			const raw = await res.text();
-			let payload: { error?: string } = {};
+	const profileUrl = $derived(canonicalProfileWrappedUrl(data.result.handle, page.url));
+	const shareText = $derived(
+		buildWrappedShareText(data.result.handle, data.result.analysis?.archetype, profileUrl)
+	);
+
+	function openPostOnX() {
+		window.open(postOnXIntentUrl(shareText), '_blank', 'noopener,noreferrer');
+	}
+
+	async function shareNative() {
+		if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
 			try {
-				payload = raw ? (JSON.parse(raw) as typeof payload) : {};
-			} catch {
-				regenerateErr = 'Bad response from server';
+				await navigator.share({ text: shareText });
 				return;
+			} catch (e) {
+				if (e instanceof DOMException && e.name === 'AbortError') return;
 			}
-			if (!res.ok) {
-				regenerateErr = payload.error ?? `Request failed (${res.status})`;
-				return;
-			}
-			await goto(`/loading/${encodeURIComponent(data.result.handle)}`);
-		} catch (e) {
-			regenerateErr = e instanceof Error ? e.message : 'Request failed';
-		} finally {
-			regenerateBusy = false;
+		}
+		openPostOnX();
+	}
+
+	async function copyShareText() {
+		try {
+			await navigator.clipboard.writeText(shareText);
+			copyDone = true;
+			if (copyFlashTimer) clearTimeout(copyFlashTimer);
+			copyFlashTimer = setTimeout(() => {
+				copyDone = false;
+			}, 2000);
+		} catch {
+			/* clipboard may be unavailable */
 		}
 	}
 
-	const tweetAgg = $derived(aggregateTweetStats(data.result.tweets));
-	const matchedBestTweet = $derived(
-		matchTweetForBestText(data.result.tweets, data.result.analysis?.best_tweet)
-	);
-	const showSeparateBiggestHit = $derived.by(() => {
-		const hit = tweetAgg.biggestHit;
-		if (!hit) return false;
-		const m = matchedBestTweet;
-		if (!m) return true;
-		return normTweetText(hit.text) !== normTweetText(m.text);
+	async function toggleVoiceover() {
+		if (!voiceoverAudio) return;
+		if (voiceoverAudio.paused) {
+			try {
+				await voiceoverAudio.play();
+			} catch {
+				isVoiceoverPlaying = false;
+			}
+			return;
+		}
+		voiceoverAudio.pause();
+	}
+
+	$effect(() => {
+		if (!browser) return;
+		const url = data.result.audioUrl?.trim();
+		const el = voiceoverAudio;
+		if (!url || !el) return;
+		void el.play().catch(() => {
+			isVoiceoverPlaying = false;
+		});
 	});
 
-	function tweetCardDate(d: Date | string | undefined): string {
-		const date = d ? new Date(d) : new Date();
-		if (Number.isNaN(date.getTime())) return '';
-		return new Intl.DateTimeFormat('en-US', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		}).format(date);
-	}
-
-	function tweetCardDateIso(d: Date | string | undefined): string | undefined {
-		const date = d ? new Date(d) : new Date();
-		if (Number.isNaN(date.getTime())) return undefined;
-		return date.toISOString();
-	}
-
-	function profileJoined(d: string | undefined): string {
-		if (!d) return '';
-		const date = new Date(d);
-		if (Number.isNaN(date.getTime())) return '';
-		return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(date);
-	}
+	const tweetAgg = $derived(aggregateTweetStats(data.result.tweets));
+	const hasBestTweet = $derived(!!data.result.analysis?.best_tweet);
+	const showStyleRail = $derived(tweetAgg.count > 0 || !!data.result.analysis?.posting_style);
 
 	const ogDescription = $derived.by(() => {
 		const a = data.result.analysis;
 		const arch = a?.archetype ?? 'X Wrapped';
-		const tone = a?.tone ? ` — ${a.tone}` : '';
-		const snippet = (a?.vibe_summary ?? '').slice(0, 140);
-		return `Archetype: ${arch}${tone}. ${snippet}`.trim();
+		const lore = (a?.archetype_description ?? '').trim();
+		const vibe = (a?.vibe_summary ?? '').trim();
+		const snippet = (lore || vibe).slice(0, 160);
+		return snippet ? `${arch}. ${snippet}` : `Archetype: ${arch}`;
 	});
+	const metricComparisons = $derived(data.result.analysis?.metric_comparisons);
+	const followersComparison = $derived(normalizeComparison(metricComparisons?.followers));
+	const peakHourComparison = $derived(normalizeComparison(metricComparisons?.peak_hour));
+
+	/** Parse a peak-hour string like "2am" / "11pm" into 0–23, or null. */
+	function parsePeakHour(raw: string | undefined): number | null {
+		const m = (raw ?? '').trim().toLowerCase().match(/^(\d{1,2})\s*(am|pm)$/);
+		if (!m) return null;
+		let h = parseInt(m[1], 10);
+		if (m[2] === 'am' && h === 12) h = 0;
+		else if (m[2] === 'pm' && h !== 12) h += 12;
+		return h >= 0 && h < 24 ? h : null;
+	}
+
+	function peakHourBg(raw: string | undefined): string {
+		const h = parsePeakHour(raw);
+		if (h === null) return 'bg-[#16181c]';
+		// night 0-4: deep navy
+		if (h < 5) return 'bg-gradient-to-b from-[#0a0e1a] to-[#111827]';
+		// dawn 5-7: warm indigo-orange
+		if (h < 8) return 'bg-gradient-to-b from-[#1e1b4b] to-[#78350f]';
+		// morning 8-11: soft blue
+		if (h < 12) return 'bg-gradient-to-b from-[#1e3a5f] to-[#0f4c75]';
+		// noon 12-14: bright sky blue
+		if (h < 15) return 'bg-gradient-to-b from-[#0369a1] to-[#0ea5e9]';
+		// afternoon 15-17: warm amber-blue
+		if (h < 18) return 'bg-gradient-to-b from-[#0c4a6e] to-[#92400e]';
+		// sunset 18-20: orange-purple
+		if (h < 21) return 'bg-gradient-to-b from-[#7c2d12] to-[#312e81]';
+		// late night 21-23: dark blue-indigo
+		return 'bg-gradient-to-b from-[#1e1b4b] to-[#0a0e1a]';
+	}
+
+	const peakHourBgClass = $derived(peakHourBg(data.result.analysis?.peak_hour));
 
 </script>
 
@@ -93,406 +130,373 @@
 	<title>@{data.result.handle}'s X Wrapped</title>
 	<meta property="og:title" content="@{data.result.handle}'s X Wrapped" />
 	<meta property="og:description" content={ogDescription} />
+	<meta property="og:url" content={profileUrl} />
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
-<div class="min-h-screen pb-28">
-	<div>
-
-		<!-- Profile header -->
-		<div class="border-b border-[#2f3336] px-4 py-6">
-			<div class="flex items-center gap-4">
-				<ProfileAvatar
-					pictureUrl={data.result.profile?.profilePicture}
-					handle={data.result.handle}
-				/>
-				<div class="min-w-0 flex-1">
-					<h1 class="text-xl font-extrabold text-[#e7e9ea]">@{data.result.handle}</h1>
-					{#if data.result.profile?.name?.trim()}
-						<p class="text-sm text-[#e7e9ea]">{data.result.profile.name.trim()}</p>
-					{/if}
-					<p class="text-[#1d9bf0]">{data.result.analysis?.archetype ?? '—'}</p>
-					{#if data.result.analysis?.vibe_summary?.trim()}
-						<p class="mt-2 text-[15px] leading-snug text-[#e7e9ea]">
-							{data.result.analysis.vibe_summary.trim()}
-						</p>
-					{/if}
-					{#if data.result.profile}
-						<div
-							class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#71767b]"
-							aria-label="Account stats"
-						>
-							<span
-								><span class="font-semibold text-[#e7e9ea]">{formatCount(data.result.profile.followers)}</span> Followers</span
-							>
-							<span
-								><span class="font-semibold text-[#e7e9ea]">{formatCount(data.result.profile.following)}</span> Following</span
-							>
-							<span
-								><span class="font-semibold text-[#e7e9ea]">{formatCount(data.result.profile.tweetsCount)}</span> Posts</span
-							>
-							{#if profileJoined(data.result.profile.joinedAt)}
-								<span
-									>Joined <time datetime={data.result.profile.joinedAt}>{profileJoined(data.result.profile.joinedAt)}</time></span
-								>
-							{/if}
-						</div>
-					{/if}
-					{#if data.result.webSearchContext}
-						<details class="mt-3 rounded-lg border border-[#2f3336] bg-[#16181c] px-3 py-2 text-left">
-							<summary class="cursor-pointer text-xs text-[#71767b] marker:text-[#71767b]">
-								Public web sources (Exa)
-							</summary>
-							<p class="mt-2 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#e7e9ea]">
-								{data.result.webSearchContext}
-							</p>
-						</details>
-					{/if}
-				</div>
+{#snippet videoBlock()}
+	{#if data.result.videoUrl}
+		<div class="border-b border-[#2f3336] p-3">
+			<div class="overflow-hidden rounded-2xl border border-[#2f3336]">
+				{#key data.result.videoUrl}
+					<video
+						src={data.result.videoUrl}
+						controls
+						loop
+						muted
+						autoplay
+						playsinline
+						class="aspect-video w-full object-cover"
+					></video>
+				{/key}
 			</div>
 		</div>
+	{:else if data.result.videoError?.trim()}
+		<div class="border-b border-[#2f3336] px-4 py-4">
+			<p class="text-lg leading-relaxed text-[#f4212e]">
+				Video could not be generated ({data.result.videoError}). Check the server log and your Magic Hour
+				account credits.
+			</p>
+		</div>
+	{/if}
+	{#if data.result.audioUrl}
+		<audio
+			bind:this={voiceoverAudio}
+			class="hidden"
+			preload="auto"
+			onplay={() => (isVoiceoverPlaying = true)}
+			onpause={() => (isVoiceoverPlaying = false)}
+			onended={() => (isVoiceoverPlaying = false)}
+		>
+			<source src={data.result.audioUrl} />
+		</audio>
+	{/if}
+{/snippet}
 
-		{#if data.result.videoUrl}
-			<div class="border-b border-[#2f3336] p-4">
-				<p class="mb-2 text-xs font-medium uppercase tracking-wider text-[#71767b]">AI wrap video</p>
-				<div class="overflow-hidden rounded-2xl border border-[#2f3336]">
-					{#key data.result.videoUrl}
-						<video
-							src={data.result.videoUrl}
-							controls
-							playsinline
-							class="aspect-video w-full object-cover"
-						>
-							<track kind="captions" />
-						</video>
-					{/key}
-				</div>
-				{#if data.canRegenerateVideo}
-					<button
-						type="button"
-						title="Clears the saved Magic Hour URL and requests a new render. There is no local MP4 fallback in this app."
-						disabled={regenerateBusy}
-						onclick={regenerateVideo}
-						class="mt-3 text-[13px] font-semibold text-[#1d9bf0] underline-offset-2 hover:underline disabled:opacity-50"
-					>
-						{regenerateBusy ? 'Starting…' : 'Regenerate video (new Magic Hour render)'}
-					</button>
-					{#if regenerateErr}
-						<p class="mt-1 text-[13px] text-[#f4212e]">{regenerateErr}</p>
-					{/if}
-				{/if}
+{#snippet profileCard()}
+	<div class="min-w-0">
+		<div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+			<h1 class="min-w-0 flex-1 text-3xl font-extrabold text-[#e7e9ea] sm:text-4xl">
+				@{data.result.handle}
+			</h1>
+			<div class="flex shrink-0 flex-wrap justify-end gap-2" role="group" aria-label="Share this Wrapped">
+				<button
+					type="button"
+					title="System share sheet on supported devices, or open X with this text pre-filled"
+					onclick={shareNative}
+					class="inline-flex min-h-9 items-center justify-center rounded-full bg-[#1d9bf0] px-4 text-[17px] font-bold text-white transition-colors hover:bg-[#1a8cd8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d9bf0] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+				>
+					Share
+				</button>
+				<button
+					type="button"
+					title="Copy pre-filled post text to clipboard"
+					onclick={copyShareText}
+					class="inline-flex min-h-9 items-center justify-center rounded-full border border-[#536471] bg-transparent px-4 text-[17px] font-bold text-[#e7e9ea] transition-colors hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d9bf0] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+				>
+					{copyDone ? 'Copied' : 'Copy text'}
+				</button>
 			</div>
-		{:else if data.result.videoError?.trim()}
-			<div class="border-b border-[#2f3336] px-4 py-4">
-				<p class="text-xs font-medium uppercase tracking-wider text-[#71767b]">AI wrap video</p>
-				<p class="mt-2 text-sm leading-relaxed text-[#f4212e]">
-					Video could not be generated ({data.result.videoError}). Check the server log and your Magic Hour
-					account credits.
+		</div>
+		{#if data.result.profile?.name?.trim()}
+			<p class="mt-1 text-lg text-[#e7e9ea]">{data.result.profile.name.trim()}</p>
+		{/if}
+		<p class="text-lg text-[#1d9bf0] sm:text-xl">{data.result.analysis?.archetype ?? '—'}</p>
+		{#if data.result.analysis?.archetype_description?.trim()}
+			<p class="mt-1 max-w-2xl text-[18px] leading-snug text-[#e7e9ea] sm:text-[17px]">
+				{data.result.analysis.archetype_description.trim()}
+			</p>
+		{/if}
+		{#if data.result.analysis?.vibe_summary?.trim()}
+			<div class="mt-3 flex max-w-2xl items-start gap-2">
+				<p class="min-w-0 flex-1 text-[21px] leading-snug text-[#e7e9ea] sm:text-[18px]">
+					{data.result.analysis.vibe_summary.trim()}
 				</p>
-				{#if data.canRegenerateVideo}
+				{#if data.result.audioUrl}
 					<button
 						type="button"
-						title="Clears the failed state and requests a new Magic Hour render."
-						disabled={regenerateBusy}
-						onclick={regenerateVideo}
-						class="mt-3 text-[13px] font-semibold text-[#1d9bf0] underline-offset-2 hover:underline disabled:opacity-50"
+						class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#2f3336] bg-[#16181c] text-[#e7e9ea] transition-colors hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d9bf0] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+						title={data.result.voiceoverVoice?.trim()
+							? `Play narrated summary (${data.result.voiceoverVoice.trim()})`
+							: 'Play narrated summary'}
+						aria-label={isVoiceoverPlaying ? 'Pause narrated summary' : 'Play narrated summary'}
+						aria-pressed={isVoiceoverPlaying}
+						onclick={toggleVoiceover}
 					>
-						{regenerateBusy ? 'Starting…' : 'Try again (regenerate video)'}
+						{#if isVoiceoverPlaying}
+							<svg viewBox="0 0 24 24" class="h-4 w-4 fill-current" aria-hidden="true">
+								<rect x="6" y="5" width="4" height="14" rx="1"></rect>
+								<rect x="14" y="5" width="4" height="14" rx="1"></rect>
+							</svg>
+						{:else}
+							<svg viewBox="0 0 24 24" class="h-4 w-4 fill-current" aria-hidden="true">
+								<path d="M8 6.5v11l9-5.5z"></path>
+							</svg>
+						{/if}
 					</button>
-					{#if regenerateErr}
-						<p class="mt-1 text-[13px] text-[#f4212e]">{regenerateErr}</p>
-					{/if}
 				{/if}
 			</div>
 		{/if}
+	</div>
+{/snippet}
 
-		{#if tweetAgg.count > 0}
-			<div class="border-b border-[#2f3336] py-4 sm:hidden">
-				<ProfileWrappedRail
-					result={data.result}
-					tweetKinds={data.tweetKinds}
-					padded={true}
-				/>
+{#snippet summaryFollowersCard(variant: 'card' | 'story')}
+	{#if data.result.profile}
+		{#if variant === 'story'}
+			<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center px-6 py-8">
+				<p class="text-[clamp(3.5rem,15vw,5.5rem)] font-extrabold leading-none tracking-tight text-white">
+					{formatCount(data.result.profile.followers)}
+				</p>
+				<p class="mt-2 text-lg uppercase tracking-widest text-[#a0aab4]">Followers</p>
+				<div class="my-4 h-px w-3/4 bg-white/10"></div>
+				<p class="max-w-xs text-center text-lg italic leading-snug text-[#b8c0c9]">
+					{describeFollowerPercentile(data.result.profile.followers)}
+				</p>
+				{#if followersComparison}
+					<p class="mt-3 max-w-xs text-center text-base leading-snug text-[#8b98a5]">
+						{followersComparison}
+					</p>
+				{/if}
 			</div>
 		{:else}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-1 text-xs font-medium uppercase tracking-wider text-[#71767b]">Post data</p>
-				<p class="text-[15px] leading-relaxed text-[#71767b]">
-					No posts were loaded for this wrap, so totals and hashtag/mention breakdowns are empty. Add
-					<code class="rounded bg-[#16181c] px-1 font-mono text-[12px] text-[#e7e9ea]">{data.result.handle}_tweets_*.txt</code>
-					at the project root, or import an export into MongoDB
-					<code class="rounded bg-[#16181c] px-1 font-mono text-[12px] text-[#e7e9ea]">tweet_archives</code>
-					(<code class="rounded bg-[#16181c] px-1 font-mono text-[12px] text-[#e7e9ea]">npm run import-tweets</code>),
-					then generate again.
+			<div class="rounded-2xl border border-[#2f3336] bg-[#16181c] px-4 py-4 sm:px-3 sm:py-3">
+				<p class="text-[20px] font-semibold leading-snug text-[#e7e9ea] sm:text-[17px] sm:font-normal">
+					{describeFollowerPercentile(data.result.profile.followers)}
 				</p>
-			</div>
-		{/if}
-
-		<!-- Stats grid -->
-		<div class="border-b border-[#2f3336] px-4 py-5">
-			<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Stats</p>
-			<div class="grid grid-cols-3 gap-4">
-				<div class="text-center">
-					<p class="text-2xl font-bold text-[#e7e9ea]">{data.result.tweets?.length || 0}</p>
-					<p class="text-xs text-[#71767b]">Tweets Analysed</p>
-				</div>
-				<div class="text-center">
-					<p class="text-2xl font-bold text-[#e7e9ea]">{data.result.analysis?.peak_hour ?? '—'}</p>
-					<p class="text-xs text-[#71767b]">Peak Hour</p>
-				</div>
-				<div class="text-center">
-					<p class="text-2xl font-bold text-[#e7e9ea]">{data.result.analysis?.tone ?? '—'}</p>
-					<p class="text-xs text-[#71767b]">Tone</p>
-				</div>
-			</div>
-		</div>
-
-		{#if tweetAgg.count > 0}
-			<div class="hidden border-b border-[#2f3336] py-4 sm:block">
-				<ProfileWrappedRail
-					result={data.result}
-					tweetKinds={data.tweetKinds}
-					sections={['engagement']}
-					padded={true}
-				/>
-			</div>
-		{/if}
-
-		{#if data.result.analysis?.posting_style || data.result.analysis?.colour_mood}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Style</p>
-				<div class="space-y-3">
-					{#if data.result.analysis.posting_style}
-						<div>
-							<p class="text-xs text-[#71767b]">How you post</p>
-							<p class="mt-0.5 text-[15px] leading-relaxed text-[#e7e9ea]">{data.result.analysis.posting_style}</p>
-						</div>
-					{/if}
-					{#if data.result.analysis.colour_mood}
-						<div>
-							<p class="text-xs text-[#71767b]">Visual vibe</p>
-							<p class="mt-0.5 text-[15px] leading-relaxed text-[#e7e9ea]">{data.result.analysis.colour_mood}</p>
-						</div>
-					{/if}
-				</div>
-			</div>
-		{/if}
-
-		<!-- Topics -->
-		<div class="border-b border-[#2f3336] px-4 py-5">
-			<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Top Topics</p>
-			<div class="flex flex-wrap gap-2">
-				{#each data.result.analysis?.top_topics || [] as topic}
-					<span class="rounded-full bg-[#1d9bf0]/10 px-3 py-1 text-sm font-medium text-[#1d9bf0]">#{topic}</span>
-				{/each}
-			</div>
-		</div>
-
-		{#if showSeparateBiggestHit && tweetAgg.biggestHit}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Most liked post</p>
-				<div class="rounded-xl border border-[#2f3336] bg-[#16181c] p-3">
-					<p class="text-[13px] font-semibold text-[#1d9bf0]">{formatCount(tweetAgg.biggestHit.likeCount)} likes</p>
-					<p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[15px] leading-snug text-[#e7e9ea]">
-						{tweetAgg.biggestHit.text.length > 220
-							? `${tweetAgg.biggestHit.text.slice(0, 220)}…`
-							: tweetAgg.biggestHit.text}
+				{#if followersComparison}
+					<p class="mt-2 text-[17px] leading-snug text-[#8b98a5] sm:mt-1 sm:text-[15px]">
+						{followersComparison}
 					</p>
+				{/if}
+			</div>
+		{/if}
+	{/if}
+{/snippet}
+
+{#snippet summaryPeakHourCard(variant: 'card' | 'story')}
+	{#if variant === 'story'}
+		<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center px-6 py-8">
+			<p class="text-[clamp(3.5rem,15vw,5.5rem)] font-extrabold leading-none tracking-tight text-white">
+				{data.result.analysis?.peak_hour?.trim() || '—'}
+			</p>
+			<p class="mt-2 text-lg uppercase tracking-widest text-[#a0aab4]">Peak Hour</p>
+			<div class="my-4 h-px w-3/4 bg-white/10"></div>
+			<p class="max-w-xs text-center text-lg italic leading-snug text-[#b8c0c9]">
+				{describePeakHour(data.result.analysis?.peak_hour)}
+			</p>
+			{#if peakHourComparison}
+				<p class="mt-3 max-w-xs text-center text-base leading-snug text-[#8b98a5]">
+					{peakHourComparison}
+				</p>
+			{/if}
+		</div>
+	{:else}
+		<div class="rounded-2xl border border-[#2f3336] bg-[#16181c] px-4 py-4 sm:px-3 sm:py-3">
+			<p class="text-[20px] font-semibold leading-snug text-[#e7e9ea] sm:text-[17px] sm:font-normal">
+				{describePeakHour(data.result.analysis?.peak_hour)}
+			</p>
+			{#if peakHourComparison}
+				<p class="mt-2 text-[17px] leading-snug text-[#8b98a5] sm:mt-1 sm:text-[15px]">
+					{peakHourComparison}
+				</p>
+			{/if}
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet summaryToneCard(variant: 'card' | 'story')}
+	{#if variant === 'story'}
+		<div class="flex min-h-0 w-full min-w-0 flex-1 flex-col items-center justify-center px-6 py-8">
+			<p class="text-[clamp(3.5rem,15vw,5.5rem)] font-extrabold leading-none tracking-tight text-white">
+				{data.result.analysis?.tone?.trim() || '—'}
+			</p>
+			<p class="mt-2 text-lg uppercase tracking-widest text-[#a0aab4]">Vibe</p>
+			<div class="my-4 h-px w-3/4 bg-white/10"></div>
+			<p class="max-w-xs text-center text-lg italic leading-snug text-[#b8c0c9]">
+				{describeTone(data.result.analysis?.tone)}
+			</p>
+		</div>
+	{:else}
+		<div class="rounded-2xl border border-[#2f3336] bg-[#16181c] px-4 py-4 sm:px-3 sm:py-3">
+			<p class="text-[20px] font-semibold leading-snug text-[#e7e9ea] sm:text-[17px] sm:font-normal">
+				{describeTone(data.result.analysis?.tone)}
+			</p>
+		</div>
+	{/if}
+{/snippet}
+
+{#snippet summaryGrid()}
+	<div class="grid gap-3 sm:grid-cols-3">
+		{@render summaryFollowersCard('card')}
+		{@render summaryPeakHourCard('card')}
+		{@render summaryToneCard('card')}
+	</div>
+{/snippet}
+
+{#snippet noPostsMessage()}
+	<div>
+		<p class="mb-1 text-sm font-medium uppercase tracking-wider text-[#71767b]">Post data</p>
+		<p class="text-[18px] leading-relaxed text-[#e7e9ea]">
+			No posts were included in this wrap yet, so engagement stats and hashtag breakdowns are not available.
+		</p>
+		<p class="mt-2 text-[15px] leading-snug text-[#71767b]">
+			Generate a new wrap after your archive is connected so posts can be analysed.
+		</p>
+	</div>
+{/snippet}
+
+<div class="min-h-screen sm:pb-28">
+	<!-- Narrow mobile: one viewport per "story" screen with scroll snap -->
+	<div
+		class="sm:hidden h-dvh max-h-dvh snap-y snap-mandatory overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]"
+		aria-label="Wrapped story"
+	>
+		<!-- 1. Profile (+ optional video): compact, top-aligned; scroll only if needed -->
+		<section
+			class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-[#2f3336]"
+		>
+			<div
+				class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1.5rem))] pb-[env(safe-area-inset-bottom,0px)]"
+			>
+				<div class="shrink-0">
+					{@render videoBlock()}
+				</div>
+				<div class="px-4 py-3">
+					{@render profileCard()}
 				</div>
 			</div>
+		</section>
+
+		<!-- 2+. One full-height snap view per metric (engagement + summary stats) -->
+		{#if tweetAgg.count > 0}
+			<section
+				class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-white/[0.08] bg-[#0c211a]"
+				aria-label="Total likes"
+			>
+				<div
+					class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain pt-[max(5rem,calc(env(safe-area-inset-top,0px)+3.25rem))] pb-[env(safe-area-inset-bottom,0px)]"
+				>
+					<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
+						<ProfileWrappedRail
+							result={data.result}
+							sections={['totalLikes']}
+							padded={false}
+							compact={true}
+							storyMetricLayout={true}
+						/>
+					</div>
+				</div>
+			</section>
+			<section
+				class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-[#2f3336]"
+				aria-label="Average views"
+			>
+				<div
+					class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-4 pt-[max(5rem,calc(env(safe-area-inset-top,0px)+3.25rem))] pb-[env(safe-area-inset-bottom,0px)]"
+				>
+					<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
+						<ProfileWrappedRail
+							result={data.result}
+							sections={['avgViews']}
+							padded={false}
+							compact={true}
+							storyMetricLayout={true}
+						/>
+					</div>
+				</div>
+			</section>
+		{:else}
+			<section
+				class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-[#2f3336]"
+				aria-label="Post data"
+			>
+				<div
+					class="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overscroll-y-contain px-4 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1.5rem))] pb-[env(safe-area-inset-bottom,0px)]"
+				>
+					<div class="mx-auto w-full max-w-lg">
+						{@render noPostsMessage()}
+					</div>
+				</div>
+			</section>
 		{/if}
 
-		<!-- Best Tweet (X / Twitter post layout) -->
-		{#if data.result.analysis?.best_tweet}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Best Tweet</p>
-
-				<article
-					class="border border-[#2f3336] bg-black transition-colors hover:bg-[#080808]"
-					aria-label="Highlighted post"
+		{#if data.result.profile}
+			<section
+				class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-[#2f3336]"
+				aria-label="Followers"
+			>
+				<div
+					class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-4 pt-[max(5rem,calc(env(safe-area-inset-top,0px)+3.25rem))] pb-[env(safe-area-inset-bottom,0px)]"
 				>
-					<div class="flex gap-3 px-4 pb-3 pt-3">
-						<div class="shrink-0 pt-0.5">
-							<ProfileAvatar
-								pictureUrl={data.result.profile?.profilePicture}
-								handle={data.result.handle}
-								sizeClass="h-10 w-10"
-								textClass="text-lg"
-							/>
-						</div>
-
-						<div class="min-w-0 flex-1">
-							<div class="flex items-start justify-between gap-2">
-								<div class="min-w-0 text-[15px] leading-5">
-									<div class="flex flex-wrap items-center gap-x-1">
-										<span class="truncate font-bold text-[#e7e9ea]">
-											{data.result.profile?.name?.trim() || data.result.handle}
-										</span>
-										{#if data.result.profile?.isBlueVerified}
-											<span
-												class="inline-flex shrink-0 text-[#1d9bf0]"
-												title="Verified account"
-												aria-label="Verified account"
-											>
-												<svg class="h-[1.1em] w-[1.1em]" viewBox="0 0 22 22" aria-hidden="true">
-													<path
-														fill="currentColor"
-														d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646-.017-1.273.212-1.813.568s-.972.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14s-1.21.436-1.68.883c-.445.47-.749 1.055-.878 1.688-.13.633-.082 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.816.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.226.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.568s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.896.445-.47.749-1.055.878-1.688.13-.633.083-1.29-.141-1.895.587-.274 1.088-.705 1.444-1.246.356-.54.555-1.17.574-1.816zM9.662 14.85l-3.429-3.428 1.293-1.292 2.072 2.072 4.26-4.26 1.293 1.286-5.489 5.622z"
-													/>
-												</svg>
-											</span>
-										{/if}
-									</div>
-									<p class="truncate text-[15px] text-[#71767b]">
-										@{data.result.handle}
-										{#if tweetCardDate(matchedBestTweet?.createdAt ?? data.result.createdAt) && tweetCardDateIso(matchedBestTweet?.createdAt ?? data.result.createdAt)}
-											<span class="select-none"> · </span>
-											<time datetime={tweetCardDateIso(matchedBestTweet?.createdAt ?? data.result.createdAt)}>
-												{tweetCardDate(matchedBestTweet?.createdAt ?? data.result.createdAt)}
-											</time>
-										{/if}
-									</p>
-								</div>
-
-								<button
-									type="button"
-									class="-mr-1 rounded-full p-1.5 text-[#71767b] transition-colors hover:bg-[#181919] hover:text-[#1d9bf0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1d9bf0]"
-									aria-label="More"
-								>
-									<svg class="h-[1.15em] w-[1.15em]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-										<path
-											d="M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"
-										/>
-									</svg>
-								</button>
-							</div>
-
-							<div
-								class="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-[1.4] text-[#e7e9ea]"
-							>
-								{data.result.analysis.best_tweet}
-							</div>
-
-							<!-- Action row (X-style: icon + count) -->
-							<div
-								class="mt-3 flex max-w-md flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[13px] text-[#71767b] [-webkit-tap-highlight-color:transparent] sm:max-w-[425px]"
-							>
-								<button
-									type="button"
-									class="group flex min-w-0 items-center gap-1.5 rounded-full py-1 pr-2 transition-colors hover:text-[#1d9bf0]"
-									aria-label="Replies"
-								>
-									<span
-										class="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors group-hover:bg-[#1d9bf0]/10"
-									>
-										<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden="true">
-											<path
-												d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.68-4.196 7.11l-8.054 4.46v-3.69h-.067c-4.49.1-8.183-3.51-8.183-8.01zm8.006-6c-3.317 0-6.005 2.69-6.005 6 0 3.37 2.77 6.08 6.138 6.01l.351-.01h1.761v2.3l5.087-2.81c1.59-.88 2.571-2.55 2.571-4.48 0-2.9-2.35-5.25-5.25-5.25H9.75z"
-												fill="currentColor"
-											/>
-										</svg>
-									</span>
-									<span class="tabular-nums">{matchedBestTweet ? formatCount(matchedBestTweet.replyCount) : '—'}</span>
-								</button>
-
-								<button
-									type="button"
-									class="group flex min-w-0 items-center gap-1.5 rounded-full py-1 pr-2 transition-colors hover:text-[#00ba7c]"
-									aria-label="Reposts"
-								>
-									<span
-										class="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors group-hover:bg-[#00ba7c]/10"
-									>
-										<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-											<path
-												d="M4.75 3.79l4.503 4.75-1.526 1.453L6 7.234V16.5h2V20H2v-3.5h2V6.234L1.25 9.992.22 8.72 4.75 3.79zm14.5 0l4.53 4.932-1.03 1.272-1.75-1.758V16.5h2V20h-6v-3.5h2V7.234l-1.727 1.758-1.527-1.453 4.503-4.75z"
-												fill="currentColor"
-											/>
-										</svg>
-									</span>
-									<span class="tabular-nums">{matchedBestTweet ? formatCount(matchedBestTweet.retweetCount) : '—'}</span>
-								</button>
-
-								<button
-									type="button"
-									class="group flex min-w-0 items-center gap-1.5 rounded-full py-1 pr-2 transition-colors hover:text-[#f91880]"
-									aria-label="Likes"
-								>
-									<span
-										class="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors group-hover:bg-[#f91880]/10"
-									>
-										<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-											<path
-												d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16-.75-1.04-1.713-1.7-2.89-1.7-1.861 0-3.371 1.507-3.371 3.366 0 3.225 3.41 6.432 6.087 8.55.192.154.437.237.683.237.245 0 .49-.083.683-.237 2.677-2.118 6.087-5.325 6.087-8.55C20 7.01 18.542 5.5 16.697 5.5zm-1.619 10.909c-.787-.74-1.509-1.477-2.164-2.206-.655.729-1.377 1.465-2.164 2.206C10.627 16.061 7 12.855 7 9.766 7 8.34 8.114 7.25 9.679 7.25c.965 0 1.809.586 2.31 1.432l.679 1.19.679-1.19c.5-.846 1.345-1.432 2.31-1.432C17.886 7.25 19 8.34 19 9.766c0 3.089-3.627 6.295-5.922 8.643z"
-												fill="currentColor"
-											/>
-										</svg>
-									</span>
-									<span class="tabular-nums">{matchedBestTweet ? formatCount(matchedBestTweet.likeCount) : '—'}</span>
-								</button>
-
-								<button
-									type="button"
-									class="group flex min-w-0 items-center gap-1.5 rounded-full py-1 pr-2 transition-colors hover:text-[#1d9bf0]"
-									aria-label="Views"
-								>
-									<span
-										class="flex h-[34px] w-[34px] items-center justify-center rounded-full transition-colors group-hover:bg-[#1d9bf0]/10"
-									>
-										<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-											<path
-												d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-4h2v4h-2z"
-												fill="currentColor"
-											/>
-										</svg>
-									</span>
-									<span class="tabular-nums"
-										>{matchedBestTweet && matchedBestTweet.viewCount > 0
-											? formatCount(matchedBestTweet.viewCount)
-											: matchedBestTweet
-												? '0'
-												: '—'}</span
-									>
-								</button>
-
-								<div class="ml-auto flex items-center gap-0.5">
-									<button
-										type="button"
-										class="rounded-full p-2 text-[#71767b] transition-colors hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0]"
-										aria-label="Bookmark"
-									>
-										<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-											<path
-												d="M4 4.5A2.5 2.5 0 016.5 2H18a2 2 0 012 2v17.5l-8-4-8 4V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.12l6-3 6 3V4.5a.5.5 0 00-.5-.5H6.5z"
-											/>
-										</svg>
-									</button>
-									<button
-										type="button"
-										class="rounded-full p-2 text-[#71767b] transition-colors hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0]"
-										aria-label="Share post"
-									>
-										<svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-											<path
-												d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15v4c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-4h2v4h14v-4h2z"
-											/>
-										</svg>
-									</button>
-								</div>
-							</div>
-
-							<div class="mt-3 border-t border-[#2f3336] pt-3">
-								<p class="text-[13px] font-bold text-[#e7e9ea]">Why Wrapped picked this</p>
-								<p class="mt-1 text-[15px] leading-[1.4] text-[#71767b]">
-									{data.result.analysis.best_tweet_why}
-								</p>
-							</div>
-						</div>
+					<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
+						{@render summaryFollowersCard('story')}
 					</div>
-				</article>
+				</div>
+			</section>
+		{/if}
+
+		<section
+			class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-white/[0.08] {peakHourBgClass}"
+			aria-label="Peak posting hour"
+		>
+			<div
+				class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain pt-[max(5rem,calc(env(safe-area-inset-top,0px)+3.25rem))] pb-[env(safe-area-inset-bottom,0px)]"
+			>
+				<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
+					{@render summaryPeakHourCard('story')}
+				</div>
+			</div>
+		</section>
+
+		<section
+			class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-[#2f3336]"
+			aria-label="Tone"
+		>
+			<div
+				class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-4 pt-[max(5rem,calc(env(safe-area-inset-top,0px)+3.25rem))] pb-[env(safe-area-inset-bottom,0px)]"
+			>
+				<div class="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
+					{@render summaryToneCard('story')}
+				</div>
+			</div>
+		</section>
+
+		<!-- 3. Best tweet + style (tags, topics) — one scrollable story screen -->
+		{#if hasBestTweet || showStyleRail}
+			<section
+				class="flex h-dvh max-h-dvh snap-start snap-always flex-col overflow-hidden border-b border-[#2f3336]"
+				aria-label="Highlights and style"
+			>
+				<div
+					class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-y-contain px-4 pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1.5rem))] pb-[env(safe-area-inset-bottom,0px)]"
+				>
+					<ProfileWrappedRail
+						result={data.result}
+						sections={['bestTweet', 'style', 'tags', 'topTopics']}
+						padded={false}
+						compact={true}
+					/>
+				</div>
+			</section>
+		{/if}
+	</div>
+
+	<!-- sm+: center column; engagement / best / style live in side rails -->
+	<div class="hidden sm:block">
+		{@render videoBlock()}
+		<div class="border-b border-[#2f3336] px-4 py-6">
+			{@render profileCard()}
+		</div>
+
+		{#if tweetAgg.count === 0}
+			<div class="border-b border-[#2f3336] px-4 py-6">
+				{@render noPostsMessage()}
 			</div>
 		{/if}
 
+		<div class="border-b border-[#2f3336] px-4 py-5">
+			{@render summaryGrid()}
+		</div>
 	</div>
 </div>

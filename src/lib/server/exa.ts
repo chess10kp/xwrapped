@@ -20,7 +20,7 @@ export function getExaClient(): Exa {
 	return client;
 }
 
-const MAX_CONTEXT_CHARS = 6000;
+const MAX_CONTEXT_CHARS = 1400;
 
 function buildPersonSearchQuery(profile: ProfileData): string {
 	const bio = profile.bio.replace(/\s+/g, ' ').trim().slice(0, 160);
@@ -40,7 +40,7 @@ function formatResultsForPrompt(
 		const r = results[i];
 		const title = r.title?.trim() || r.url;
 		const hl = (r.highlights ?? []).filter(Boolean).join(' … ');
-		lines.push(`### [${i + 1}] ${title}`);
+		lines.push(`### ${title}`);
 		lines.push(`URL: ${r.url}`);
 		if (hl) lines.push(hl);
 		lines.push('');
@@ -53,21 +53,17 @@ function formatResultsForPrompt(
 }
 
 /**
- * Public-web context for this account (Exa neural search + highlights), for LLM grounding alongside tweet data.
+ * Public-web context for this account (one Exa result + highlights), for LLM grounding alongside tweet data.
  * Returns null if Exa is not configured or the request fails.
  */
 export async function searchWebContextForPerson(profile: ProfileData): Promise<string | null> {
 	if (!isExaConfigured()) return null;
 	const query = buildPersonSearchQuery(profile);
 	try {
-		const res = await getExaClient().search(query, {
+		const res = await getExaClient().searchAndContents(query, {
 			type: 'auto',
-			numResults: 6,
-			contents: {
-				highlights: {
-					maxCharacters: 800
-				}
-			}
+			numResults: 1,
+			highlights: true
 		});
 		const formatted = formatResultsForPrompt(res.results);
 		return formatted.length > 0 ? formatted : null;
@@ -89,7 +85,8 @@ export type SearchWebOptions = {
 		| 'tweet'
 		| 'personal site'
 		| 'financial report'
-		| 'people';
+		| 'github'
+		| 'linkedin profile';
 };
 
 /**
@@ -97,15 +94,11 @@ export type SearchWebOptions = {
  */
 export async function searchWeb(query: string, options?: SearchWebOptions) {
 	const { numResults = 10, category } = options ?? {};
-	return getExaClient().search(query, {
+	return getExaClient().searchAndContents(query, {
 		type: 'auto',
 		numResults,
 		...(category ? { category } : {}),
-		contents: {
-			highlights: {
-				maxCharacters: 4000
-			}
-		}
+		highlights: true
 	});
 }
 
