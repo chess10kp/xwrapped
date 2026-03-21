@@ -1,3 +1,4 @@
+import { jsonrepair } from 'jsonrepair';
 import { OPENROUTER_API_KEY } from '$lib/server/env.server';
 import type { ProfileData, TweetData, PersonalityAnalysis } from './types';
 import { aggregateTweetStats } from '$lib/tweet-stats';
@@ -5,6 +6,13 @@ import { aggregateTweetStats } from '$lib/tweet-stats';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 /** OpenRouter free-tier router — https://openrouter.ai/docs/guides/routing/routers/free-models-router */
 const MODEL = 'openrouter/free';
+
+/** Live tweet fetch paginates all pages; the prompt must stay within model context (esp. on free routers). */
+const MAX_TWEETS_IN_PROMPT = 100;
+/** Long threads or quote-tweets can still blow the budget; trim per-tweet text in the prompt only. */
+const MAX_TWEET_CHARS_IN_PROMPT = 560;
+/** Personality JSON is large; remote free models often need ≥4k completion headroom. */
+const MAX_COMPLETION_TOKENS = 8192;
 
 function getOpenRouterKey(): string {
   const apiKey = OPENROUTER_API_KEY?.trim();
@@ -53,20 +61,83 @@ function extractAssistantMessageText(message: unknown): string | undefined {
     if (t) return t;
   }
 
+  if (typeof m.reasoning === 'string') {
+    const r = m.reasoning.trim();
+    if (r.length > 0) return r;
+  }
+
   return undefined;
 }
 
-function parsePersonalityJson(text: string): PersonalityAnalysis {
-  const trimmed = text.trim();
-  try {
-    return JSON.parse(trimmed) as PersonalityAnalysis;
-  } catch {
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (match) {
-      return JSON.parse(match[0]) as PersonalityAnalysis;
+function trimTweetTextForPrompt(text: string): string {
+  const t = text.trim();
+  if (t.length <= MAX_TWEET_CHARS_IN_PROMPT) return t;
+  return `${t.slice(0, MAX_TWEET_CHARS_IN_PROMPT)}…`;
+}
+
+/** Remove optional ``` / ```json fences the model sometimes wraps around output. */
+function stripCodeFences(text: string): string {
+  const t = text.trim();
+  const m = t.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i);
+  if (m) return m[1].trim();
+  return t;
+}
+
+/**
+ * First `{` … matching `}` with string/escape awareness (greedy regex breaks on nested objects).
+ * Returns null if braces never balance (truncated response).
+ */
+function extractBalancedJsonObject(s: string): string | null {
+  const start = s.indexOf('{');
+  if (start === -1) return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+      } else if (c === '\\') {
+        escape = true;
+      } else if (c === '"') {
+        inString = false;
+      }
+    } else if (c === '"') {
+      inString = true;
+    } else if (c === '{') {
+      depth++;
+    } else if (c === '}') {
+      depth--;
+      if (depth === 0) return s.slice(start, i + 1);
     }
-    throw new Error('Model did not return valid JSON for personality analysis');
   }
+  return null;
+}
+
+function parsePersonalityJson(text: string): PersonalityAnalysis {
+  const stripped = stripCodeFences(text.trim());
+  const balanced = extractBalancedJsonObject(stripped);
+  const chunks = balanced ? Array.from(new Set([stripped, balanced])) : [stripped];
+
+  const errors: string[] = [];
+  for (const chunk of chunks) {
+    try {
+      return JSON.parse(chunk) as PersonalityAnalysis;
+    } catch (e) {
+      errors.push(e instanceof Error ? e.message : String(e));
+    }
+    try {
+      return JSON.parse(jsonrepair(chunk)) as PersonalityAnalysis;
+    } catch (e) {
+      errors.push(`jsonrepair: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+
+  const preview = stripped.length > 400 ? `${stripped.slice(0, 400)}…` : stripped;
+  throw new Error(
+    `Model did not return valid JSON for personality analysis (${errors[0] ?? 'unknown'}). Snippet: ${preview}`
+  );
 }
 
 function buildPrompt(
@@ -74,9 +145,13 @@ function buildPrompt(
   tweets: TweetData[],
   webSearchContext?: string | null
 ): string {
-  const tweetAgg = aggregateTweetStats(tweets);
-  const tweetTexts = tweets
-    .map((t, i) => `[${i+1}] "${t.text}" (${t.likeCount} likes, ${new Date(t.createdAt).toLocaleDateString()})`)
+  const capped = tweets.slice(0, MAX_TWEETS_IN_PROMPT);
+  const tweetAgg = aggregateTweetStats(capped);
+  const tweetTexts = capped
+    .map(
+      (t, i) =>
+        `[${i + 1}] "${trimTweetTextForPrompt(t.text)}" (${t.likeCount} likes, ${new Date(t.createdAt).toLocaleDateString()})`
+    )
     .join('\n');
 
   const webTrim = webSearchContext?.trim() ?? '';
@@ -88,6 +163,8 @@ ${webTrim}
     : '';
 
   return `You are an expert personality analyst. Analyse this X (Twitter) user's public profile and recent tweets. Return ONLY valid JSON matching this exact schema — no markdown, no explanation.
+
+JSON string rules (critical): escape every internal double quote as \\" and use \\n for newlines. If a tweet in best_tweet contains quotes, escape them or use a short paraphrase so the output is valid JSON.
 
 Writing style for ALL string fields: write like Spotify Wrapped talking directly to the person. Use second person. Short punchy sentences. Celebratory but slightly roast-y. Confident, never hedging. Informal, like a hype friend who has read every tweet and has opinions.
 
@@ -118,14 +195,14 @@ Write metric_comparisons like Spotify Wrapped factoids. One short sentence per m
 - Total tweets: ${profile.tweetsCount}
 - Joined: ${profile.joinedAt}
 
-## Recent Tweets (${tweets.length} total)
+## Recent Tweets (${capped.length} of ${tweets.length} total — capped for analysis)
 ${tweetTexts}
 ## Metric inputs for comparison lines
 - followers: ${profile.followers}
 - following: ${profile.following}
 - lifetime_posts: ${profile.tweetsCount}
-- posts_analysed: ${tweets.length}
-- peak_hour: ${tweets.length > 0 ? 'infer from tweet timestamps' : 'unknown'}
+- posts_analysed: ${capped.length}
+- peak_hour: ${capped.length > 0 ? 'infer from tweet timestamps' : 'unknown'}
 - total_likes_on_analysed_posts: ${tweetAgg.totalLikes}
 - avg_views_per_analysed_post: ${tweetAgg.avgViews}
 ${webSection}## Required JSON Output Schema
@@ -167,7 +244,7 @@ export async function analysePersonality(
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 2048,
+      max_tokens: MAX_COMPLETION_TOKENS,
       messages: [{ role: 'user', content: buildPrompt(profile, tweets, webSearchContext) }]
     })
   });

@@ -1,5 +1,6 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
 	parseBillGatesTweetExportFile,
 	parseTweetExportFile,
@@ -9,8 +10,9 @@ import { archivedTweetsToTweetData } from './tweet-archive';
 import type { ArchivedTweet, TweetExportFooter } from './tweet-archive';
 import type { ProfileData, TweetData } from './types';
 import { stubProfile } from './stub-x-data';
+import { bundledTweetExportFileNames, getBundledTweetExportText } from './bundled-tweet-exports';
 
-/** Max posts from a repo-root `*_tweets_*.txt` used for engagement, patterns, and rail stats. */
+/** Max posts from a bundled or repo-root `*_tweets_*.txt` used for engagement, patterns, and rail stats. */
 export const REPO_EXPORT_MAX_POSTS = 100;
 
 export interface RepoTweetExport {
@@ -28,21 +30,65 @@ function repoRoot(): string {
 	return process.cwd();
 }
 
-/** Resolves `{handle}_tweets_*.txt` at the project root (first match). */
-export function findTweetExportFileForHandle(handle: string): string | null {
+const TWEET_EXPORTS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'tweet-exports');
+
+type ResolvedExport =
+	| { kind: 'bundled'; fileName: string; text: string }
+	| { kind: 'disk'; path: string };
+
+function resolveTweetExportForHandle(handle: string): ResolvedExport | null {
 	const h = handle.toLowerCase().trim();
 	if (!h) return null;
+
+	const directName = `${h}_tweets_2025.txt`;
+	const bundledDirect = getBundledTweetExportText(directName);
+	if (bundledDirect !== undefined) {
+		return { kind: 'bundled', fileName: directName, text: bundledDirect };
+	}
+
+	const re = new RegExp(`^${escapeRegExp(h)}_tweets_.+\\.txt$`, 'i');
+	for (const name of bundledTweetExportFileNames()) {
+		if (re.test(name)) {
+			const text = getBundledTweetExportText(name);
+			if (text !== undefined) {
+				return { kind: 'bundled', fileName: name, text };
+			}
+		}
+	}
+
+	const onDiskInTweetExports = findTweetExportPathInDir(TWEET_EXPORTS_DIR, h, re);
+	if (onDiskInTweetExports) {
+		return { kind: 'disk', path: onDiskInTweetExports };
+	}
+
 	const root = repoRoot();
-	const direct = join(root, `${h}_tweets_2025.txt`);
+	const onDiskRoot = findTweetExportPathInDir(root, h, re);
+	if (onDiskRoot) {
+		return { kind: 'disk', path: onDiskRoot };
+	}
+
+	return null;
+}
+
+function findTweetExportPathInDir(dir: string, h: string, nameRe: RegExp): string | null {
+	const direct = join(dir, `${h}_tweets_2025.txt`);
 	if (existsSync(direct)) return direct;
 	try {
-		const re = new RegExp(`^${escapeRegExp(h)}_tweets_.+\\.txt$`, 'i');
-		const files = readdirSync(root);
-		const name = files.find((f) => re.test(f));
-		return name ? join(root, name) : null;
+		const files = readdirSync(dir);
+		const name = files.find((f) => nameRe.test(f));
+		return name ? join(dir, name) : null;
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * Returns a filesystem path to an export, or `bundled:<filename>` when the text is inlined in the server bundle.
+ */
+export function findTweetExportFileForHandle(handle: string): string | null {
+	const r = resolveTweetExportForHandle(handle);
+	if (!r) return null;
+	return r.kind === 'bundled' ? `bundled:${r.fileName}` : r.path;
 }
 
 function useBillGatesParser(fileName: string): boolean {
@@ -50,12 +96,18 @@ function useBillGatesParser(fileName: string): boolean {
 	return n.includes('billgates') || n.includes('bill_gates');
 }
 
-/** Loads scraped posts from a repo-root export file, if one exists for this handle. */
+/** Loads scraped posts from a bundled or on-disk export file, if one exists for this handle. */
 export function loadRepoTweetExport(handle: string): RepoTweetExport | null {
-	const path = findTweetExportFileForHandle(handle);
-	if (!path) return null;
-	const text = readFileSync(path, 'utf8');
-	const fileName = basename(path);
+	const resolved = resolveTweetExportForHandle(handle);
+	if (!resolved) return null;
+
+	const fileName =
+		resolved.kind === 'bundled' ? resolved.fileName : basename(resolved.path);
+	const text =
+		resolved.kind === 'bundled' ? resolved.text : readFileSync(resolved.path, 'utf8');
+	const absolutePath =
+		resolved.kind === 'bundled' ? `bundled:${resolved.fileName}` : resolved.path;
+
 	const parsed = useBillGatesParser(fileName)
 		? parseBillGatesTweetExportFile(text)
 		: parseTweetExportFile(text);
@@ -63,7 +115,7 @@ export function loadRepoTweetExport(handle: string): RepoTweetExport | null {
 	const tweets = parsed.tweets.slice(0, REPO_EXPORT_MAX_POSTS);
 	return {
 		sourceFile: fileName,
-		absolutePath: path,
+		absolutePath,
 		tweets,
 		footer: parsed.footer
 	};

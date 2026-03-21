@@ -106,8 +106,9 @@ async function processHandle(id: string, handle: string): Promise<void> {
     let profile: ProfileData;
     let tweets: TweetData[];
 
-    // Priority 1: Try to load from repo tweet export
+    // Priority 1: Try bundled or on-disk tweet export (no twitterapi.io)
     const repo = loadRepoTweetExport(handle);
+    const usedBundledOrRepoExport = Boolean(repo?.tweets.length);
     if (repo?.tweets.length) {
       log("using repo tweet export", {
         sourceFile: repo.sourceFile,
@@ -133,7 +134,7 @@ async function processHandle(id: string, handle: string): Promise<void> {
       tweets = stubTweets(handle);
     }
 
-    if (isTwitterApiConfigured()) {
+    if (isTwitterApiConfigured() && !usedBundledOrRepoExport) {
       log(
         "merging live X profile (twitterapi.io user/info — avatar + counts)…",
       );
