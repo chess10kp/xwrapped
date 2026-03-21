@@ -46,6 +46,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Package lock file (auto-generated, causes conflicts)
+package-lock.json
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 

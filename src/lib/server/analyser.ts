@@ -68,19 +68,10 @@ function parsePersonalityJson(text: string): PersonalityAnalysis {
   }
 }
 
-function buildPrompt(profile: ProfileData, tweets: TweetData[], webSearchContext?: string): string {
+function buildPrompt(profile: ProfileData, tweets: TweetData[]): string {
   const tweetTexts = tweets
     .map((t, i) => `[${i+1}] "${t.text}" (${t.likeCount} likes, ${new Date(t.createdAt).toLocaleDateString()})`)
     .join('\n');
-
-  const webSection =
-    webSearchContext?.trim() &&
-    `## Public web context (Exa search — third-party pages; may be incomplete or outdated)
-Use only as supporting context alongside their own tweets. Do not treat as definitive biography.
-
-${webSearchContext.trim()}
-
-`;
 
   return `You are an expert personality analyst. Analyse this X (Twitter) user's public profile and recent tweets. Return ONLY valid JSON matching this exact schema — no markdown, no explanation.
 
@@ -97,7 +88,7 @@ For archetype and especially vibe_summary: infer how they come across from their
 - Total tweets: ${profile.tweetsCount}
 - Joined: ${profile.joinedAt}
 
-${webSection ?? ''}## Recent Tweets (${tweets.length} total)
+## Recent Tweets (${tweets.length} total)
 ${tweetTexts}
 
 ## Required JSON Output Schema
@@ -116,8 +107,7 @@ ${tweetTexts}
 
 export async function analysePersonality(
   profile: ProfileData,
-  tweets: TweetData[],
-  webSearchContext?: string
+  tweets: TweetData[]
 ): Promise<PersonalityAnalysis> {
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -130,7 +120,7 @@ export async function analysePersonality(
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 2048,
-      messages: [{ role: 'user', content: buildPrompt(profile, tweets, webSearchContext) }]
+      messages: [{ role: 'user', content: buildPrompt(profile, tweets) }]
     })
   });
 

@@ -1,4 +1,5 @@
 import { store } from './db';
+import { fetchProfile, fetchTweets } from './twitterapi';
 import {
 	loadRepoTweetExport,
 	profileFromExportFooter,
@@ -7,8 +8,8 @@ import {
 import { stubProfile, stubTweets } from './stub-x-data';
 import type { ProfileData, TweetData } from './types';
 import { analysePersonality } from './analyser';
-import { isExaConfigured, searchWebContextForPerson } from './exa';
 import { generateWrappedVideo, isMagicHourConfigured } from './magichour';
+import { TWITTERAPI_IO_KEY } from '$lib/server/env.server';
 
 const log = (...args: unknown[]) => console.log('[pipeline]', ...args);
 
@@ -45,6 +46,8 @@ async function processHandle(id: string, handle: string): Promise<void> {
 
     let profile: ProfileData;
     let tweets: TweetData[];
+    
+    // Priority 1: Try to load from repo tweet export
     const repo = loadRepoTweetExport(handle);
     if (repo?.tweets.length) {
       log('using repo tweet export', { sourceFile: repo.sourceFile, tweetCount: repo.tweets.length });
@@ -52,8 +55,15 @@ async function processHandle(id: string, handle: string): Promise<void> {
         ? profileFromExportFooter(handle, repo.footer, repo.tweets.length)
         : { ...stubProfile(handle), tweetsCount: repo.tweets.length };
       tweets = repoTweetsAsTweetData(repo.tweets);
-    } else {
-      log('no repo export — using stub profile + tweets');
+    }
+    // Priority 2: Try to fetch from twitterapi.io
+    else if (TWITTERAPI_IO_KEY?.trim()) {
+      log('scraping profile + tweets (twitterapi.io)…');
+      [profile, tweets] = await Promise.all([fetchProfile(handle), fetchTweets(handle)]);
+    }
+    // Priority 3: Fall back to stubs
+    else {
+      log('no repo export or TWITTERAPI_IO_KEY — using stub profile + tweets');
       profile = stubProfile(handle);
       tweets = stubTweets(handle);
     }
@@ -65,23 +75,8 @@ async function processHandle(id: string, handle: string): Promise<void> {
       tweets 
     });
 
-    let webSearchContext: string | undefined;
-    if (isExaConfigured()) {
-      log('Exa web search (public context for this person)…');
-      const ctx = await searchWebContextForPerson(profile);
-      if (ctx) {
-        webSearchContext = ctx;
-        await store.update(id, { webSearchContext: ctx });
-        log('Exa context ok', { chars: ctx.length });
-      } else {
-        log('Exa context skipped or empty');
-      }
-    } else {
-      log('Exa disabled — set EXA_API_KEY for web search alongside tweets');
-    }
-
     log('analysing personality (OpenRouter)…');
-    const analysis = await analysePersonality(profile, tweets, webSearchContext);
+    const analysis = await analysePersonality(profile, tweets);
     log('analysis ok', { archetype: analysis.archetype });
 
     if (isMagicHourConfigured()) {

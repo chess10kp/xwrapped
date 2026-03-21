@@ -10,6 +10,7 @@
     "npm:apify-client@^2.22.3": "2.22.3",
     "npm:daisyui@^5.5.19": "5.5.19",
     "npm:dotenv@^17.3.1": "17.3.1",
+    "npm:exa-js@^2.8.0": "2.8.0",
     "npm:magic-hour@0.55": "0.55.0",
     "npm:mongodb@^7.1.0": "7.1.0",
     "npm:svelte-check@^4.4.2": "4.4.5_svelte@5.54.1_typescript@5.9.3",
@@ -17,6 +18,7 @@
     "npm:tailwindcss@^4.1.18": "4.2.2",
     "npm:tsx@^4.21.0": "4.21.0",
     "npm:typescript@^5.9.3": "5.9.3",
+    "npm:vader-sentiment@^1.1.3": "1.1.3",
     "npm:vite@^7.3.1": "7.3.1_@types+node@25.5.0_tsx@4.21.0"
   },
   "npm": {
@@ -693,6 +695,12 @@
     "cookie@0.6.0": {
       "integrity": "sha512-U71cyTamuh1CRNCfpGY6to28lxvNwPG4Guz/EVjgf3Jmzv0vlDp1atT9eS5dDjMYHucpHbWns6Lwf3BKz6svdw=="
     },
+    "cross-fetch@4.1.0": {
+      "integrity": "sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==",
+      "dependencies": [
+        "node-fetch"
+      ]
+    },
     "daisyui@5.5.19": {
       "integrity": "sha512-pbFAkl1VCEh/MPCeclKL61I/MqRIFFhNU7yiXoDDRapXN4/qNCoMxeCCswyxEEhqL5eiTTfwHvucFtOE71C9sA=="
     },
@@ -730,6 +738,9 @@
       "dependencies": [
         "is-obj"
       ]
+    },
+    "dotenv@16.4.7": {
+      "integrity": "sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ=="
     },
     "dotenv@17.3.1": {
       "integrity": "sha512-IO8C/dzEb6O3F9/twg6ZLXz164a2fhTnEWb95H23Dm4OuN+92NmEAlTrupP9VW6Jm3sO26tQlqyvyi4CsnY9GA=="
@@ -837,6 +848,16 @@
     },
     "esutils@2.0.3": {
       "integrity": "sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g=="
+    },
+    "exa-js@2.8.0": {
+      "integrity": "sha512-y/rrmhq4TceY3CLa8N65mDDQ5pUP4MPqgM9C4nZQ01p1+MBFiS0GX/y/pEVxB5l8dOgGBaZT7zzUOhzaP8d1mw==",
+      "dependencies": [
+        "cross-fetch",
+        "dotenv@16.4.7",
+        "openai",
+        "zod",
+        "zod-to-json-schema"
+      ]
     },
     "fdir@6.5.0_picomatch@4.0.3": {
       "integrity": "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==",
@@ -1149,6 +1170,16 @@
     "obug@2.1.1": {
       "integrity": "sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ=="
     },
+    "openai@5.23.2_zod@3.25.76": {
+      "integrity": "sha512-MQBzmTulj+MM5O8SKEk/gL8a7s5mktS9zUtAkU257WjvobGc9nKcBuVwjyEEcb9SI8a8Y2G/mzn3vm9n1Jlleg==",
+      "dependencies": [
+        "zod"
+      ],
+      "optionalPeers": [
+        "zod"
+      ],
+      "bin": true
+    },
     "ow@0.28.2": {
       "integrity": "sha512-dD4UpyBh/9m4X2NVjA+73/ZPBRF+uF4zIMFvvQsabMiEK8x41L3rQ8EENOi35kyyoaJwNxEeJcP6Fj1H4U409Q==",
       "dependencies": [
@@ -1443,6 +1474,9 @@
     "undici-types@7.18.2": {
       "integrity": "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="
     },
+    "vader-sentiment@1.1.3": {
+      "integrity": "sha512-z9ys48I7pd3ngy/YzYDCTcOp6//z96wiXaJnQnuyxiPT3PTU0mWLWVCKvips11S5euvHfXsr0ahsmWT2oeXcUw=="
+    },
     "vali-date@1.0.0": {
       "integrity": "sha512-sgECfZthyaCKW10N0fm27cg8HYTFK5qMWgypqkXMQ4Wbl/zZKx7xZICgcoxIIE+WFAP/MBL2EFwC/YvLxw3Zeg=="
     },
@@ -1499,6 +1533,12 @@
     "zimmerframe@1.1.4": {
       "integrity": "sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ=="
     },
+    "zod-to-json-schema@3.25.1_zod@3.25.76": {
+      "integrity": "sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA==",
+      "dependencies": [
+        "zod"
+      ]
+    },
     "zod@3.25.76": {
       "integrity": "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="
     }
@@ -1515,6 +1555,7 @@
         "npm:apify-client@^2.22.3",
         "npm:daisyui@^5.5.19",
         "npm:dotenv@^17.3.1",
+        "npm:exa-js@^2.8.0",
         "npm:magic-hour@0.55",
         "npm:mongodb@^7.1.0",
         "npm:svelte-check@^4.4.2",
@@ -1522,6 +1563,7 @@
         "npm:tailwindcss@^4.1.18",
         "npm:tsx@^4.21.0",
         "npm:typescript@^5.9.3",
+        "npm:vader-sentiment@^1.1.3",
         "npm:vite@^7.3.1"
       ]
     }

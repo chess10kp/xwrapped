@@ -1,37 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { TWITTERAPI_IO_KEY } from '$lib/server/env.server';
+import { fetchRawTweets, type RawTweet } from '$lib/server/twitterapi';
 import { getDb } from '$lib/server/mongo-connection';
-
-const TWITTERAPI_BASE = 'https://api.twitterapi.io';
-
-interface TwitterApiTweet {
-	id: string;
-	url: string;
-	text: string;
-	source: string;
-	retweetCount: number;
-	replyCount: number;
-	likeCount: number;
-	quoteCount: number;
-	viewCount: number;
-	createdAt: string;
-	lang: string;
-	bookmarkCount: number;
-	isReply: boolean;
-	inReplyToId?: string;
-	conversationId?: string;
-	inReplyToUserId?: string;
-	inReplyToUsername?: string;
-	entities?: Record<string, unknown>;
-}
-
-interface TwitterApiResponse {
-	tweets: TwitterApiTweet[];
-	has_next_page: boolean;
-	next_cursor: string;
-	status: 'success' | 'error';
-	message?: string;
-}
 
 /** Document shape stored in the "scraped_tweets" MongoDB collection. */
 interface ScrapedTweetDoc {
@@ -58,42 +28,6 @@ interface ScrapedTweetDoc {
 	scrapedAt: Date;
 }
 
-/**
- * Fetch all tweets for a given username, paginating through all pages.
- * Each page returns up to 20 tweets.
- */
-async function fetchAllTweets(userName: string): Promise<TwitterApiTweet[]> {
-	const allTweets: TwitterApiTweet[] = [];
-	let cursor = '';
-	let hasNextPage = true;
-
-	while (hasNextPage) {
-		const params = new URLSearchParams({ userName, includeReplies: 'false' });
-		if (cursor) params.set('cursor', cursor);
-
-		const res = await fetch(`${TWITTERAPI_BASE}/twitter/user/last_tweets?${params}`, {
-			headers: { 'x-api-key': TWITTERAPI_IO_KEY }
-		});
-
-		if (!res.ok) {
-			const text = await res.text();
-			throw new Error(`twitterapi.io error ${res.status}: ${text}`);
-		}
-
-		const data: TwitterApiResponse = await res.json();
-
-		if (data.status === 'error') {
-			throw new Error(`twitterapi.io: ${data.message ?? 'unknown error'}`);
-		}
-
-		allTweets.push(...data.tweets);
-		hasNextPage = data.has_next_page;
-		cursor = data.next_cursor ?? '';
-	}
-
-	return allTweets;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function POST({ request }: { request: any }) {
 	const body = await request.json().catch(() => null);
@@ -112,9 +46,9 @@ export async function POST({ request }: { request: any }) {
 		return json({ error: 'TWITTERAPI_IO_KEY is not configured on the server' }, { status: 503 });
 	}
 
-	let tweets: TwitterApiTweet[];
+	let tweets: RawTweet[];
 	try {
-		tweets = await fetchAllTweets(handle);
+		tweets = await fetchRawTweets(handle);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err);
 		console.error(`[api/scrape] fetch failed for @${handle}:`, message);

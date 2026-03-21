@@ -5,6 +5,7 @@ const STUB_PFP: Record<string, string> = {
   billgates: '/images/billgates_pfp.jpg'
 };
 
+/** Placeholder profile + tweets used when `TWITTERAPI_IO_KEY` is not configured and no repo export exists. */
 export function stubProfile(handle: string): ProfileData {
   const h = handle.toLowerCase();
   const displayName =
@@ -12,7 +13,7 @@ export function stubProfile(handle: string): ProfileData {
   return {
     username: handle,
     name: displayName,
-    bio: '',
+    bio: 'Stub profile — set TWITTERAPI_IO_KEY in .env to scrape live data from X.',
     followers: 12_400,
     following: 890,
     tweetsCount: 3200,
