@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
-import { store } from '$lib/server/store';
+import { store } from '$lib/server/db';
 
 export async function GET({ params }) {
-  const result = store.get(params.uuid);
+  const result = await store.get(params.uuid);
   
   if (!result) {
     return json({ error: 'Not found' }, { status: 404 });

@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { store } from '$lib/server/store';
+import { store } from '$lib/server/db';
 import { processHandle } from '$lib/server/pipeline';
 
 export async function POST({ request }) {
@@ -17,7 +17,7 @@ export async function POST({ request }) {
 
   const id = crypto.randomUUID();
   
-  store.set(id, { 
+  await store.set(id, { 
     id, 
     handle: cleanedHandle, 
     status: 'scraping', 

@@ -1,8 +1,8 @@
-import { store } from '$lib/server/store';
+import { store } from '$lib/server/db';
 import { redirect } from '@sveltejs/kit';
 
 export async function load({ params }) {
-	const result = store.get(params.uuid);
+	const result = await store.get(params.uuid);
 	
 	if (!result || result.status !== 'complete') {
 		redirect(307, `/loading/${params.uuid}`);
