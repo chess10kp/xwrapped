@@ -1,46 +1,8 @@
 @import 'tailwindcss';
+@plugin 'daisyui';
 
-@plugin 'daisyui' {
-	themes: xwrapped --default;
-}
-
-@plugin 'daisyui/theme' {
-	name: 'xwrapped';
-	default: true;
-	prefersdark: false;
-	color-scheme: dark;
-
-	/* X / “Wrapped” surfaces (original app palette) */
-	--color-base-100: #0f1419;
-	--color-base-200: #16181c;
-	--color-base-300: #2f3336;
-	--color-base-content: #e7e9ea;
-
-	--color-primary: #1d9bf0;
-	--color-primary-content: #ffffff;
-
-	/* Supporting roles — tuned for dark UI, readable on base */
-	--color-secondary: oklch(68% 0.12 265);
-	--color-secondary-content: oklch(96% 0.01 265);
-	--color-accent: oklch(72% 0.14 250);
-	--color-accent-content: oklch(18% 0.04 250);
-	--color-neutral: oklch(28% 0.02 260);
-	--color-neutral-content: oklch(86% 0.01 260);
-	--color-info: oklch(68% 0.15 237);
-	--color-info-content: oklch(12% 0.04 237);
-	--color-success: oklch(72% 0.14 165);
-	--color-success-content: oklch(16% 0.04 165);
-	--color-warning: oklch(82% 0.15 85);
-	--color-warning-content: oklch(22% 0.06 85);
-	--color-error: oklch(68% 0.18 25);
-	--color-error-content: oklch(98% 0.01 25);
-
-	--radius-selector: 1rem;
-	--radius-field: 0.5rem;
-	--radius-box: 1rem;
-	--size-selector: 0.25rem;
-	--size-field: 0.25rem;
-	--border: 1px;
-	--depth: 0;
-	--noise: 0;
+body {
+	background-color: #000;
+	color: #e7e9ea;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }

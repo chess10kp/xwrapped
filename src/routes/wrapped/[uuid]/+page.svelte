@@ -35,95 +35,107 @@
 	<meta name="twitter:card" content="player" />
 </svelte:head>
 
-<div class="min-h-screen bg-base-100 pb-28">
-	<div class="container mx-auto max-w-4xl space-y-8 p-4">
-		<div class="text-center">
-			<h1 class="text-4xl font-bold text-primary">@{data.result.handle}'s X Wrapped</h1>
+<div class="min-h-screen pb-28">
+	<div class="mx-auto max-w-[600px] border-x border-[#2f3336]">
+
+		<!-- Profile header -->
+		<div class="border-b border-[#2f3336] px-4 py-6">
+			<div class="flex items-center gap-4">
+				<div class="flex h-16 w-16 items-center justify-center rounded-full bg-[#1d9bf0] text-2xl font-bold text-white">𝕏</div>
+				<div>
+					<h1 class="text-xl font-extrabold text-[#e7e9ea]">@{data.result.handle}</h1>
+					<p class="text-[#1d9bf0]">{data.result.analysis?.archetype}</p>
+					<p class="mt-1 text-sm text-[#71767b]">{data.result.analysis?.archetype_description}</p>
+				</div>
+			</div>
 		</div>
 
+		<!-- Video -->
 		{#if data.result.videoUrl}
-			<div class="card bg-base-200 overflow-hidden shadow-xl">
-				<figure class="aspect-video w-full">
-					<video src={data.result.videoUrl} controls autoplay class="h-full w-full object-cover">
+			<div class="border-b border-[#2f3336] p-4">
+				<div class="overflow-hidden rounded-2xl border border-[#2f3336]">
+					<video src={data.result.videoUrl} controls autoplay class="aspect-video w-full object-cover">
 						<track kind="captions" />
 					</video>
-				</figure>
+				</div>
 			</div>
 		{/if}
 
-		<div class="grid gap-4 sm:grid-cols-3">
-			<div class="card bg-base-200 shadow-xl">
-				<div class="card-body items-center text-center">
-					<p class="text-sm uppercase tracking-wider text-base-content/50">Archetype</p>
-					<h2 class="card-title text-primary justify-center">{data.result.analysis?.archetype}</h2>
-					<p class="text-sm text-base-content/70">{data.result.analysis?.archetype_description}</p>
+		<!-- Stats grid -->
+		<div class="border-b border-[#2f3336] px-4 py-5">
+			<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Stats</p>
+			<div class="grid grid-cols-3 gap-4">
+				<div class="text-center">
+					<p class="text-2xl font-bold text-[#e7e9ea]">{data.result.tweets?.length || 0}</p>
+					<p class="text-xs text-[#71767b]">Tweets Analysed</p>
+				</div>
+				<div class="text-center">
+					<p class="text-2xl font-bold text-[#e7e9ea]">{data.result.analysis?.peak_hour}</p>
+					<p class="text-xs text-[#71767b]">Peak Hour</p>
+				</div>
+				<div class="text-center">
+					<p class="text-2xl font-bold text-[#e7e9ea]">{data.result.analysis?.tone}</p>
+					<p class="text-xs text-[#71767b]">Tone</p>
 				</div>
 			</div>
+		</div>
 
-			<div class="card bg-base-200 shadow-xl">
-				<div class="card-body items-center text-center">
-					<p class="text-sm uppercase tracking-wider text-base-content/50">Top Topics</p>
-					<div class="flex flex-wrap justify-center gap-2">
-						{#each data.result.analysis?.top_topics || [] as topic}
-							<span class="badge badge-primary badge-lg">{topic}</span>
-						{/each}
+		<!-- Topics -->
+		<div class="border-b border-[#2f3336] px-4 py-5">
+			<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Top Topics</p>
+			<div class="flex flex-wrap gap-2">
+				{#each data.result.analysis?.top_topics || [] as topic}
+					<span class="rounded-full bg-[#1d9bf0]/10 px-3 py-1 text-sm font-medium text-[#1d9bf0]">#{topic}</span>
+				{/each}
+			</div>
+		</div>
+
+		<!-- Best Tweet -->
+		{#if data.result.analysis?.best_tweet}
+			<div class="border-b border-[#2f3336] px-4 py-5">
+				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Best Tweet</p>
+				<div class="rounded-2xl border border-[#2f3336] bg-[#16181c] p-4">
+					<div class="mb-2 flex items-center gap-3">
+						<div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#1d9bf0] text-lg font-bold text-white">𝕏</div>
+						<div>
+							<p class="font-bold text-[#e7e9ea]">@{data.result.handle}</p>
+						</div>
+					</div>
+					<p class="text-[#e7e9ea]">"{data.result.analysis.best_tweet}"</p>
+					<!-- "Why" as a reply -->
+					<div class="mt-3 border-t border-[#2f3336] pt-3">
+						<p class="text-sm text-[#71767b]">{data.result.analysis.best_tweet_why}</p>
 					</div>
 				</div>
 			</div>
-
-			<div class="card bg-base-200 shadow-xl">
-				<div class="card-body items-center text-center">
-					<p class="text-sm uppercase tracking-wider text-base-content/50">Peak Hour</p>
-					<p class="text-xl font-semibold text-base-content">{data.result.analysis?.peak_hour}</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="grid gap-4 sm:grid-cols-2">
-			<div class="card bg-base-200 shadow-xl">
-				<div class="card-body items-center text-center">
-					<p class="text-sm uppercase tracking-wider text-base-content/50">Tone</p>
-					<p class="text-xl font-semibold text-base-content">{data.result.analysis?.tone}</p>
-				</div>
-			</div>
-
-			<div class="card bg-base-200 shadow-xl">
-				<div class="card-body items-center text-center">
-					<p class="text-sm uppercase tracking-wider text-base-content/50">Tweets Analysed</p>
-					<p class="text-xl font-semibold text-base-content">{data.result.tweets?.length || 0}</p>
-				</div>
-			</div>
-		</div>
-
-		{#if data.result.analysis?.best_tweet}
-			<div class="card bg-base-200 shadow-xl">
-				<div class="card-body">
-					<p class="text-sm uppercase tracking-wider text-base-content/50">Best Tweet</p>
-					<p class="text-lg text-base-content">"{data.result.analysis.best_tweet}"</p>
-					<p class="mt-2 text-sm text-base-content/70">{data.result.analysis.best_tweet_why}</p>
-				</div>
-			</div>
 		{/if}
 
-		<div class="card bg-base-200 shadow-xl">
-			<div class="card-body">
-				<p class="text-sm uppercase tracking-wider text-base-content/50">Vibe Summary</p>
-				<p class="text-lg text-base-content">{data.result.analysis?.vibe_summary}</p>
-			</div>
+		<!-- Vibe Summary -->
+		<div class="border-b border-[#2f3336] px-4 py-5">
+			<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Vibe Summary</p>
+			<p class="text-[#e7e9ea]">{data.result.analysis?.vibe_summary}</p>
 		</div>
+
 	</div>
 
-	<div
-		class="fixed bottom-0 left-0 right-0 border-t border-base-300 bg-base-200/95 backdrop-blur-sm"
-	>
-		<div class="navbar min-h-0 justify-center gap-4 px-4 py-4">
-			<button type="button" onclick={shareOnX} class="btn btn-primary gap-2">
+	<!-- Bottom action bar -->
+	<div class="fixed bottom-0 left-0 right-0 border-t border-[#2f3336] bg-black/95 backdrop-blur-sm">
+		<div class="mx-auto flex max-w-[600px] items-center justify-center gap-3 px-4 py-3">
+			<button
+				type="button"
+				onclick={shareOnX}
+				class="flex items-center gap-2 rounded-full bg-[#1d9bf0] px-6 py-2.5 font-bold text-white transition-colors hover:bg-[#1a8cd8]"
+			>
 				<span>🔗</span>
 				Share on X
 			</button>
 
 			{#if data.result.videoUrl}
-				<button type="button" onclick={downloadVideo} class="btn btn-outline btn-primary gap-2">
+				<button
+					type="button"
+					onclick={downloadVideo}
+					class="flex items-center gap-2 rounded-full border border-[#536471] px-6 py-2.5 font-bold text-[#e7e9ea] transition-colors hover:bg-[#181919]"
+				>
 					<span>⬇</span>
 					Download
 				</button>

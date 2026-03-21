@@ -43,60 +43,70 @@
 	}
 </script>
 
-<div class="flex min-h-screen flex-col items-center justify-center bg-base-100 p-4">
-	<div class="w-full max-w-2xl space-y-8 text-center">
-		{#if status === 'scraping'}
-			<div class="flex flex-col items-center gap-4">
+<div class="flex min-h-screen items-center justify-center px-4">
+	<div class="mx-auto w-full max-w-[600px] border-x border-[#2f3336] px-6 py-16">
+		<div class="flex flex-col items-center gap-6 text-center">
+
+			{#if status === 'scraping'}
 				<div class="text-6xl animate-bounce">𝕏</div>
-				<p class="text-2xl text-base-content">{getStatusText()}</p>
-			</div>
-		{:else if status === 'analysing'}
-			<div class="flex flex-col items-center gap-4">
+				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
+
+			{:else if status === 'analysing'}
 				<div class="text-6xl animate-pulse">🧠</div>
-				<p class="text-2xl text-base-content">{getStatusText()}</p>
-			</div>
-		{:else if status === 'generating' && analysis}
-			<div class="flex flex-col items-center gap-6">
-				<span class="loading loading-spinner loading-lg text-primary"></span>
-				<p class="text-2xl text-base-content">{getStatusText()}</p>
+				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
 
-				<div class="card bg-base-200 shadow-xl w-full text-left">
-					<div class="card-body gap-4">
-						<div class="text-center">
-							<p class="text-sm uppercase tracking-wider text-base-content/50">Your Archetype</p>
-							<p class="text-3xl font-bold text-primary">{analysis.archetype}</p>
+			{:else if status === 'generating' && analysis}
+				<!-- Spinner -->
+				<svg class="h-8 w-8 animate-spin text-[#1d9bf0]" viewBox="0 0 24 24" fill="none">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
+
+				<!-- Tweet-card preview -->
+				<div class="w-full rounded-2xl border border-[#2f3336] bg-[#16181c] p-5 text-left">
+					<!-- Author row -->
+					<div class="mb-4 flex items-center gap-3">
+						<div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#1d9bf0] text-lg font-bold text-white">𝕏</div>
+						<div>
+							<p class="font-bold text-[#e7e9ea]">{analysis.archetype}</p>
+							<p class="text-sm text-[#71767b]">@{data.handle}</p>
 						</div>
+					</div>
 
-						<div class="flex flex-wrap justify-center gap-2">
-							{#each analysis.top_topics as topic}
-								<span class="badge badge-primary badge-lg">{topic}</span>
-							{/each}
+					<!-- Topics as hashtags -->
+					<div class="mb-4 flex flex-wrap gap-2">
+						{#each analysis.top_topics as topic}
+							<span class="rounded-full bg-[#1d9bf0]/10 px-3 py-1 text-sm font-medium text-[#1d9bf0]">#{topic}</span>
+						{/each}
+					</div>
+
+					<!-- Metadata -->
+					<div class="flex gap-8 border-t border-[#2f3336] pt-3 text-sm text-[#71767b]">
+						<div>
+							<span class="uppercase tracking-wider">Tone</span>
+							<p class="font-semibold text-[#e7e9ea]">{analysis.tone}</p>
 						</div>
-
-						<div class="grid grid-cols-2 gap-4 text-center">
-							<div>
-								<p class="text-sm uppercase text-base-content/50">Tone</p>
-								<p class="font-semibold text-base-content">{analysis.tone}</p>
-							</div>
-							<div>
-								<p class="text-sm uppercase text-base-content/50">Peak Hour</p>
-								<p class="font-semibold text-base-content">{analysis.peak_hour}</p>
-							</div>
+						<div>
+							<span class="uppercase tracking-wider">Peak Hour</span>
+							<p class="font-semibold text-[#e7e9ea]">{analysis.peak_hour}</p>
 						</div>
 					</div>
 				</div>
-			</div>
-		{:else if status === 'error'}
-			<div class="flex flex-col items-center gap-4">
+
+			{:else if status === 'error'}
 				<div class="text-6xl">❌</div>
-				<p class="text-2xl text-base-content">{getStatusText()}</p>
-				<a href="/" class="link link-primary">Try again</a>
-			</div>
-		{:else}
-			<div class="flex flex-col items-center gap-4">
-				<span class="loading loading-spinner loading-lg text-primary"></span>
-				<p class="text-2xl text-base-content">{getStatusText()}</p>
-			</div>
-		{/if}
+				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
+				<a href="/" class="text-[#1d9bf0] transition-colors hover:underline">Try again</a>
+
+			{:else}
+				<svg class="h-8 w-8 animate-spin text-[#1d9bf0]" viewBox="0 0 24 24" fill="none">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
+			{/if}
+
+		</div>
 	</div>
 </div>
