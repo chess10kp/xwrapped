@@ -2,11 +2,10 @@
 	import { goto } from '$app/navigation';
 	import ProfileAvatar from '$lib/components/ProfileAvatar.svelte';
 	import type { PageData } from './$types';
-	import type { PersonalityAnalysis, ProfileData } from '$lib/server/types';
+	import type { ProfileData } from '$lib/server/types';
 
 	let { data } = $props<{ data: PageData }>();
 	let status = $state('scraping');
-	let analysis = $state<PersonalityAnalysis | null>(null);
 	let profile = $state<ProfileData | null>(null);
 	let jobError = $state<string | null>(null);
 
@@ -17,7 +16,6 @@
 				const raw = await res.text();
 				let json: {
 					status?: string;
-					analysis?: PersonalityAnalysis;
 					profile?: ProfileData;
 					error?: string;
 				} = {};
@@ -38,7 +36,6 @@
 				}
 
 				status = json.status ?? status;
-				if (json.analysis) analysis = json.analysis;
 				if (json.profile) profile = json.profile;
 				if (json.status === 'complete') {
 					clearInterval(interval);
@@ -72,8 +69,8 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center px-4">
-	<div class="w-full px-6 py-16">
+<div class="flex min-h-0 flex-1 flex-col items-center justify-center px-4 py-16">
+	<div class="w-full px-6">
 		<div class="flex flex-col items-center gap-6 text-center">
 
 			{#if status === 'scraping'}

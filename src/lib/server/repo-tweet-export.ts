@@ -10,6 +10,9 @@ import type { ArchivedTweet, TweetExportFooter } from './tweet-archive';
 import type { ProfileData, TweetData } from './types';
 import { stubProfile } from './stub-x-data';
 
+/** Max posts from a repo-root `*_tweets_*.txt` used for engagement, patterns, and rail stats. */
+export const REPO_EXPORT_MAX_POSTS = 100;
+
 export interface RepoTweetExport {
 	sourceFile: string;
 	absolutePath: string;
@@ -57,10 +60,11 @@ export function loadRepoTweetExport(handle: string): RepoTweetExport | null {
 		? parseBillGatesTweetExportFile(text)
 		: parseTweetExportFile(text);
 	if (!parsed.tweets?.length) return null;
+	const tweets = parsed.tweets.slice(0, REPO_EXPORT_MAX_POSTS);
 	return {
 		sourceFile: fileName,
 		absolutePath: path,
-		tweets: parsed.tweets,
+		tweets,
 		footer: parsed.footer
 	};
 }

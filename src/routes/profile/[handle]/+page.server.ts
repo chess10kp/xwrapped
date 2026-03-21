@@ -8,15 +8,29 @@ import {
 } from '$lib/server/repo-tweet-export';
 import { stubProfile } from '$lib/server/stub-x-data';
 import { store } from '$lib/server/db';
+import { isMagicHourConfigured } from '$lib/server/magichour';
+import { processVideoBackfill } from '$lib/server/pipeline';
 import { redirect } from '@sveltejs/kit';
 import type { TweetArchiveDocument } from '$lib/server/tweet-archive';
-import type { ArchiveDisplayMeta } from '$lib/server/types';
-
 export async function load({ params }) {
 	const handle = params.handle.toLowerCase();
 	const result = await store.get(handle);
 
 	if (!result || result.status !== 'complete') {
+		redirect(307, `/loading/${handle}`);
+	}
+
+	// Cached wraps from before video was wired, or first run without MAGIC_HOUR_API_KEY: enqueue video once.
+	if (
+		result.analysis &&
+		!result.videoUrl &&
+		isMagicHourConfigured() &&
+		!result.videoError?.trim()
+	) {
+		const claimed = await store.claimVideoBackfill(handle);
+		if (claimed) {
+			processVideoBackfill(handle);
+		}
 		redirect(307, `/loading/${handle}`);
 	}
 
@@ -27,7 +41,6 @@ export async function load({ params }) {
 		archive = undefined;
 	}
 
-	let archiveMeta: ArchiveDisplayMeta | null = null;
 	let tweetKinds: ('tweet' | 'repost')[] | null = null;
 
 	let tweets = (result.tweets ?? []).map((t) => normalizeTweetData(t));
@@ -35,21 +48,11 @@ export async function load({ params }) {
 	const repo = loadRepoTweetExport(handle);
 	if (repo?.tweets.length) {
 		tweets = repoTweetsAsTweetData(repo.tweets).map(normalizeTweetData);
-		archiveMeta = {
-			tweetCount: repo.tweets.length,
-			sourceFile: repo.sourceFile,
-			source: 'repo'
-		};
 		tweetKinds = repo.tweets.map((t) => t.kind);
 	} else if (archive?.tweets?.length) {
 		const useArchive = !tweets.length || archive.tweets.length >= tweets.length;
 		if (useArchive) {
 			tweets = archivedTweetsToTweetData(archive.tweets).map(normalizeTweetData);
-			archiveMeta = {
-				tweetCount: archive.tweetCount,
-				sourceFile: archive.sourceFile,
-				source: 'mongo'
-			};
 			tweetKinds = archive.tweets.map((t) => t.kind);
 		}
 	}
@@ -63,13 +66,18 @@ export async function load({ params }) {
 		profile = { ...profile, bio: archive.footer.description.trim() };
 	}
 
+	const stub = stubProfile(handle);
+	if (profile && !(profile.profilePicture ?? '').trim() && stub.profilePicture) {
+		profile = { ...profile, profilePicture: stub.profilePicture };
+	}
+
 	return {
 		result: {
 			...result,
 			tweets,
 			profile
 		},
-		archiveMeta,
-		tweetKinds
+		tweetKinds,
+		canRegenerateVideo: isMagicHourConfigured()
 	};
 }

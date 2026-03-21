@@ -7,9 +7,42 @@
 		matchTweetForBestText,
 		normTweetText
 	} from '$lib/tweet-stats';
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 
 	let { data } = $props<{ data: PageData }>();
+
+	let regenerateBusy = $state(false);
+	let regenerateErr = $state('');
+
+	async function regenerateVideo() {
+		regenerateErr = '';
+		regenerateBusy = true;
+		try {
+			const res = await fetch('/api/regenerate-video', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ handle: data.result.handle })
+			});
+			const raw = await res.text();
+			let payload: { error?: string } = {};
+			try {
+				payload = raw ? (JSON.parse(raw) as typeof payload) : {};
+			} catch {
+				regenerateErr = 'Bad response from server';
+				return;
+			}
+			if (!res.ok) {
+				regenerateErr = payload.error ?? `Request failed (${res.status})`;
+				return;
+			}
+			await goto(`/loading/${encodeURIComponent(data.result.handle)}`);
+		} catch (e) {
+			regenerateErr = e instanceof Error ? e.message : 'Request failed';
+		} finally {
+			regenerateBusy = false;
+		}
+	}
 
 	const tweetAgg = $derived(aggregateTweetStats(data.result.tweets));
 	const matchedBestTweet = $derived(
@@ -39,14 +72,6 @@
 		return date.toISOString();
 	}
 
-	function shareOnX() {
-		const shareText = `just got my X Wrapped 🎁 ${window.location.href} — what's your archetype?`;
-		window.open(
-			`https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`,
-			'_blank'
-		);
-	}
-
 	function profileJoined(d: string | undefined): string {
 		if (!d) return '';
 		const date = new Date(d);
@@ -58,7 +83,7 @@
 		const a = data.result.analysis;
 		const arch = a?.archetype ?? 'X Wrapped';
 		const tone = a?.tone ? ` — ${a.tone}` : '';
-		const snippet = (a?.vibe_summary ?? a?.archetype_description ?? '').slice(0, 140);
+		const snippet = (a?.vibe_summary ?? '').slice(0, 140);
 		return `Archetype: ${arch}${tone}. ${snippet}`.trim();
 	});
 
@@ -88,9 +113,10 @@
 						<p class="text-sm text-[#e7e9ea]">{data.result.profile.name.trim()}</p>
 					{/if}
 					<p class="text-[#1d9bf0]">{data.result.analysis?.archetype ?? '—'}</p>
-					<p class="mt-1 text-sm text-[#71767b]">{data.result.analysis?.archetype_description ?? ''}</p>
-					{#if data.result.profile?.bio?.trim()}
-						<p class="mt-2 text-[15px] leading-snug text-[#e7e9ea]">{data.result.profile.bio.trim()}</p>
+					{#if data.result.analysis?.vibe_summary?.trim()}
+						<p class="mt-2 text-[15px] leading-snug text-[#e7e9ea]">
+							{data.result.analysis.vibe_summary.trim()}
+						</p>
 					{/if}
 					{#if data.result.profile}
 						<div
@@ -125,33 +151,52 @@
 					{/if}
 				</div>
 			</div>
-			{#if data.archiveMeta}
-				<div
-					class="mt-4 rounded-lg border border-[#1d9bf0]/25 bg-[#1d9bf0]/5 px-3 py-2.5 text-[13px] leading-snug text-[#e7e9ea]"
-				>
-					{#if data.archiveMeta.source === 'repo'}
-						<span class="font-semibold text-[#1d9bf0]">Repo export</span>
-						Engagement and patterns (sidebar on desktop, below on mobile) use
-						<span class="tabular-nums font-medium">{data.archiveMeta.tweetCount}</span>
-						posts from
-						<span class="font-mono text-[12px] text-[#71767b]">{data.archiveMeta.sourceFile}</span>
-						in the project. The summary used the posts stored when this wrap was generated.
-					{:else}
-						<span class="font-semibold text-[#1d9bf0]">Imported archive</span>
-						Engagement and patterns use
-						<span class="tabular-nums font-medium">{data.archiveMeta.tweetCount}</span>
-						posts from MongoDB
-						<span class="font-mono text-[12px] text-[#71767b]">{data.archiveMeta.sourceFile}</span>. The summary used the posts stored when this wrap was generated.
-					{/if}
-				</div>
-			{/if}
 		</div>
+
+		{#if data.result.videoUrl}
+			<div class="border-b border-[#2f3336] p-4">
+				<p class="mb-2 text-xs font-medium uppercase tracking-wider text-[#71767b]">AI wrap video</p>
+				<div class="overflow-hidden rounded-2xl border border-[#2f3336]">
+					{#key data.result.videoUrl}
+						<video
+							src={data.result.videoUrl}
+							controls
+							playsinline
+							class="aspect-video w-full object-cover"
+						>
+							<track kind="captions" />
+						</video>
+					{/key}
+				</div>
+				{#if data.canRegenerateVideo}
+					<button
+						type="button"
+						title="Clears the saved Magic Hour URL and requests a new render. There is no local MP4 fallback in this app."
+						disabled={regenerateBusy}
+						onclick={regenerateVideo}
+						class="mt-3 text-[13px] font-semibold text-[#1d9bf0] underline-offset-2 hover:underline disabled:opacity-50"
+					>
+						{regenerateBusy ? 'Starting…' : 'Regenerate video (new Magic Hour render)'}
+					</button>
+					{#if regenerateErr}
+						<p class="mt-1 text-[13px] text-[#f4212e]">{regenerateErr}</p>
+					{/if}
+				{/if}
+			</div>
+		{:else if data.result.videoError?.trim()}
+			<div class="border-b border-[#2f3336] px-4 py-4">
+				<p class="text-xs font-medium uppercase tracking-wider text-[#71767b]">AI wrap video</p>
+				<p class="mt-2 text-sm leading-relaxed text-[#f4212e]">
+					Video could not be generated ({data.result.videoError}). Check the server log and your Magic Hour
+					account credits.
+				</p>
+			</div>
+		{/if}
 
 		{#if tweetAgg.count > 0}
 			<div class="border-b border-[#2f3336] py-4 sm:hidden">
 				<ProfileWrappedRail
 					result={data.result}
-					archiveMeta={data.archiveMeta}
 					tweetKinds={data.tweetKinds}
 					padded={true}
 				/>
@@ -188,6 +233,17 @@
 				</div>
 			</div>
 		</div>
+
+		{#if tweetAgg.count > 0}
+			<div class="hidden border-b border-[#2f3336] py-4 sm:block">
+				<ProfileWrappedRail
+					result={data.result}
+					tweetKinds={data.tweetKinds}
+					sections={['engagement']}
+					padded={true}
+				/>
+			</div>
+		{/if}
 
 		{#if data.result.analysis?.posting_style || data.result.analysis?.colour_mood}
 			<div class="border-b border-[#2f3336] px-4 py-5">
@@ -424,26 +480,5 @@
 			</div>
 		{/if}
 
-		<div class="border-b border-[#2f3336] px-4 py-5">
-			<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">The read</p>
-			<p class="text-[15px] leading-relaxed text-[#e7e9ea]">{data.result.analysis?.vibe_summary}</p>
-		</div>
-
-	</div>
-
-	<!-- Bottom action bar (match main column: exclude right rail so buttons stay centered on feed) -->
-	<div
-		class="fixed bottom-0 left-[72px] right-0 border-t border-[#2f3336] bg-black/95 backdrop-blur-sm sm:right-[350px] xl:left-[275px]"
-	>
-		<div class="flex w-full items-center justify-center gap-3 px-4 py-3">
-			<button
-				type="button"
-				onclick={shareOnX}
-				class="flex items-center gap-2 rounded-full bg-[#1d9bf0] px-6 py-2.5 font-bold text-white transition-colors hover:bg-[#1a8cd8]"
-			>
-				<span>🔗</span>
-				Share on X
-			</button>
-		</div>
 	</div>
 </div>

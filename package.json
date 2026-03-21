@@ -34,9 +34,9 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"apify-client": "^2.22.3",
 		"exa-js": "^2.8.0",
 		"magic-hour": "^0.55.0",
-		"mongodb": "^7.1.0"
+		"mongodb": "^7.1.0",
+		"vader-sentiment": "^1.1.3"
 	}
 }

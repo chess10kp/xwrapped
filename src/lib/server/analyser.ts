@@ -86,6 +86,8 @@ ${webSearchContext.trim()}
 
 Writing style for ALL string fields: sound like a sharp human, not a brochure. Be concrete. Never use filler phrases, buzzwords, or "AI voice" (e.g. avoid: delve, tapestry, landscape, journey, unlock, navigate, realm, vibrant, robust, in today's world, at the end of the day, it goes without saying).
 
+For archetype and especially vibe_summary: infer how they come across from their tweets — topics, voice, habits. The official bio is optional context only; do not let it override what the posts actually show.
+
 ## Profile
 - Handle: @${profile.username}
 - Name: ${profile.name}
@@ -100,15 +102,14 @@ ${tweetTexts}
 
 ## Required JSON Output Schema
 {
-  "archetype": "A creative 2-4 word label like 'The Midnight Ranter' or 'The Thread Architect'",
-  "archetype_description": "One sentence explaining why this archetype fits",
+  "archetype": "A creative 2-6 word persona label like 'The Midnight Ranter' or 'The Thread Architect' — specific to their tweets, not generic",
   "top_topics": ["topic1", "topic2", "topic3"],
   "tone": "One word: e.g. sardonic, earnest, chaotic, analytical, wholesome",
   "posting_style": "One sentence describing HOW they post (thread lover, hot take machine, etc)",
   "peak_hour": "Best guess of their most active posting time, e.g. '2am'",
   "best_tweet": "Copy the single most characteristic/engaging tweet verbatim",
   "best_tweet_why": "One sentence on why this tweet captures their essence",
-  "vibe_summary": "Exactly two short sentences: what this account is actually like to follow, in plain English. Pull in specific habits or topics from the tweets. No hype, no trailer narration, no summary-of-a-summary.",
+  "vibe_summary": "Exactly two short sentences: what this account reads as from the tweets alone — voice, fixations, how they show up in the feed. Ground it in the posts, not the bio. No hype, no trailer narration, no summary-of-a-summary.",
   "colour_mood": "A visual mood for video generation: e.g. 'neon cyberpunk', 'warm sunset', 'dark academia'"
 }`;
 }

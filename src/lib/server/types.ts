@@ -23,7 +23,6 @@ export interface TweetData {
 
 export interface PersonalityAnalysis {
   archetype: string;
-  archetype_description: string;
   top_topics: string[];
   tone: string;
   posting_style: string;
@@ -36,15 +35,6 @@ export interface PersonalityAnalysis {
 
 export type WrappedStatus = 'scraping' | 'analysing' | 'generating' | 'complete' | 'error';
 
-/** Where the expanded tweet list on the profile page comes from (repo file vs Mongo `tweet_archives`). */
-export type TweetDatasetSource = 'repo' | 'mongo';
-
-export interface ArchiveDisplayMeta {
-	tweetCount: number;
-	sourceFile: string;
-	source: TweetDatasetSource;
-}
-
 export interface WrappedResult {
   id: string;
   handle: string;
@@ -55,6 +45,8 @@ export interface WrappedResult {
   webSearchContext?: string;
   analysis?: PersonalityAnalysis;
   videoUrl?: string;
+  /** Set when Magic Hour failed so we do not retry on every page load */
+  videoError?: string;
   error?: string;
   createdAt: Date;
 }

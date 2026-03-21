@@ -68,8 +68,8 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center">
-	<div class="w-full px-6 py-16">
+<div class="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-16">
+	<div class="w-full">
 		<div class="flex flex-col items-center gap-8">
 			<!-- X Logo -->
 			<div class="text-6xl font-bold text-[#e7e9ea]">𝕏</div>

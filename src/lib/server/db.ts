@@ -37,6 +37,34 @@ export class Store {
 		if (Object.keys(set).length === 0) return;
 		await db.collection<WrappedMongoDoc>(COLLECTION).updateOne({ _id: id }, { $set: set });
 	}
+
+	/**
+	 * Atomically move a completed wrap (no video yet, no prior video failure) to `generating`
+	 * so only one backfill run is queued. Returns true if this request claimed the job.
+	 */
+	async claimVideoBackfill(id: string): Promise<boolean> {
+		const db = await getDb();
+		const res = await db.collection<WrappedMongoDoc>(COLLECTION).updateOne(
+			{
+				_id: id,
+				status: 'complete',
+				analysis: { $exists: true },
+				videoUrl: { $exists: false },
+				$or: [{ videoError: { $exists: false } }, { videoError: '' }]
+			},
+			{ $set: { status: 'generating' } }
+		);
+		return res.modifiedCount === 1;
+	}
+
+	/** Remove persisted Magic Hour fields so a new render can run (same analysis). */
+	async clearStoredVideo(id: string): Promise<void> {
+		const db = await getDb();
+		await db.collection<WrappedMongoDoc>(COLLECTION).updateOne(
+			{ _id: id },
+			{ $unset: { videoUrl: '', videoError: '' } }
+		);
+	}
 }
 
 export const store = new Store();

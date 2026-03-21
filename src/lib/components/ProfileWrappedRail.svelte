@@ -2,19 +2,27 @@
 	import { aggregateTweetStats, formatCount } from '$lib/tweet-stats';
 	import { computeTweetInsights } from '$lib/tweet-insights';
 	import { computeSentimentSummary, describeMeanCompound } from '$lib/tweet-sentiment';
-	import type { ArchiveDisplayMeta, WrappedResult } from '$lib/server/types';
+	import type { WrappedResult } from '$lib/server/types';
+
+	type RailSection = 'engagement' | 'sentiment' | 'patterns' | 'tags';
 
 	let {
 		result,
-		archiveMeta = null,
 		tweetKinds = null,
-		padded = false
+		padded = false,
+		sections = null
 	}: {
 		result: WrappedResult;
-		archiveMeta?: ArchiveDisplayMeta | null;
 		tweetKinds?: ('tweet' | 'repost')[] | null;
 		padded?: boolean;
+		/** If set, only these sections render. If null, all sections render. */
+		sections?: RailSection[] | null;
 	} = $props();
+
+	function showSection(id: RailSection): boolean {
+		if (!sections?.length) return true;
+		return sections.includes(id);
+	}
 
 	const tweetAgg = $derived(aggregateTweetStats(result.tweets));
 	const insights = $derived(
@@ -41,17 +49,10 @@
 </script>
 
 <div class="flex flex-col gap-4 {wrapClass}">
-	{#if tweetAgg.count > 0}
+	{#if showSection('engagement') && tweetAgg.count > 0}
 		<section class="overflow-hidden rounded-2xl border border-[#2f3336] bg-black" aria-labelledby="rail-eng-heading">
 			<div class="px-3 py-2.5">
 				<h2 id="rail-eng-heading" class="text-[15px] font-bold text-[#e7e9ea]">Engagement</h2>
-				<p class="text-[12px] text-[#71767b]">
-					{#if archiveMeta}
-						{archiveMeta.source === 'repo' ? 'Repo export' : 'Mongo import'}
-					{:else}
-						This wrap
-					{/if}
-				</p>
 			</div>
 			<div class="grid grid-cols-2 gap-2 px-3 pb-3">
 				<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-2.5 py-2">
@@ -74,16 +75,16 @@
 		</section>
 	{/if}
 
-	{#if sentiment && tweetAgg.count > 0}
+	{#if showSection('sentiment') && sentiment && tweetAgg.count > 0}
 		<section class="overflow-hidden rounded-2xl border border-[#2f3336] bg-black" aria-labelledby="rail-sent-heading">
 			<div class="px-3 py-2.5">
 				<h2 id="rail-sent-heading" class="text-[15px] font-bold text-[#e7e9ea]">Sentiment</h2>
 				<p class="text-[11px] leading-snug text-[#71767b]">
-					VADER (English short text): −1 very negative → +1 very positive
+					Tone (English short text): −1 very negative → +1 very positive
 				</p>
 			</div>
 			<div class="px-3 pb-2">
-				<div class="flex h-2 w-full overflow-hidden rounded-full bg-[#2f3336]" role="img" aria-label="Sentiment mix">
+				<div class="flex h-2 w-full overflow-hidden rounded-full bg-[#2f3336]" role="img" aria-label="Tone mix">
 					{#if sentiment.positivePercent > 0}
 						<div class="bg-[#00ba7c]" style="width: {sentiment.positivePercent}%"></div>
 					{/if}
@@ -106,15 +107,12 @@
 		</section>
 	{/if}
 
-	{#if insights}
+	{#if showSection('patterns') && insights}
 		<section class="overflow-hidden rounded-2xl border border-[#2f3336] bg-black" aria-labelledby="rail-pat-heading">
 			<div class="px-3 py-2.5">
 				<h2 id="rail-pat-heading" class="text-[15px] font-bold text-[#e7e9ea]">Patterns</h2>
 				<p class="text-[12px] text-[#71767b]">
 					{insights.originalPercent}% original · {insights.repostPercent}% reposts
-					{#if insights.kindSource === 'archive'}
-						<span class="text-[#536471]">· export</span>
-					{/if}
 				</p>
 			</div>
 			<div class="grid grid-cols-2 gap-1.5 px-3 pb-2">
@@ -184,7 +182,7 @@
 		</section>
 	{/if}
 
-	{#if tweetAgg.topHashtags.length > 0 || tweetAgg.topMentions.length > 0}
+	{#if showSection('tags') && (tweetAgg.topHashtags.length > 0 || tweetAgg.topMentions.length > 0)}
 		<section class="overflow-hidden rounded-2xl border border-[#2f3336] bg-black" aria-labelledby="rail-tags-heading">
 			<div class="px-3 py-2.5">
 				<h2 id="rail-tags-heading" class="text-[15px] font-bold text-[#e7e9ea]">In these posts</h2>

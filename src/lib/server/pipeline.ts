@@ -8,8 +8,35 @@ import { stubProfile, stubTweets } from './stub-x-data';
 import type { ProfileData, TweetData } from './types';
 import { analysePersonality } from './analyser';
 import { isExaConfigured, searchWebContextForPerson } from './exa';
+import { generateWrappedVideo, isMagicHourConfigured } from './magichour';
 
 const log = (...args: unknown[]) => console.log('[pipeline]', ...args);
+
+/** Generate video for an existing completed wrap (e.g. backfill after adding MAGIC_HOUR_API_KEY). */
+export async function processVideoBackfill(handle: string): Promise<void> {
+	const id = handle.toLowerCase();
+	const r = await store.get(id);
+	if (!r?.analysis || r.videoUrl) return;
+	try {
+		const videoUrl = await generateWrappedVideo(r.analysis, handle);
+		log('video backfill ready', { id, urlLength: videoUrl.length });
+		await store.update(id, {
+			status: 'complete',
+			analysis: r.analysis,
+			videoUrl,
+			videoError: ''
+		});
+	} catch (videoErr) {
+		const message = videoErr instanceof Error ? videoErr.message : String(videoErr);
+		console.error('[pipeline] video backfill failed', { id, handle, error: videoErr });
+		await store.update(id, {
+			status: 'complete',
+			analysis: r.analysis,
+			videoError: message.slice(0, 500)
+		});
+		log('backfill complete without video', { id, handle });
+	}
+}
 
 async function processHandle(id: string, handle: string): Promise<void> {
   log('start', { id, handle });
@@ -57,10 +84,38 @@ async function processHandle(id: string, handle: string): Promise<void> {
     const analysis = await analysePersonality(profile, tweets, webSearchContext);
     log('analysis ok', { archetype: analysis.archetype });
 
-    await store.update(id, {
-      status: 'complete',
-      analysis
-    });
+    if (isMagicHourConfigured()) {
+      await store.update(id, {
+        status: 'generating',
+        analysis
+      });
+      log('generating video (Magic Hour)…');
+      try {
+        const videoUrl = await generateWrappedVideo(analysis, handle);
+        log('video ready', { urlLength: videoUrl.length });
+        await store.update(id, {
+          status: 'complete',
+          analysis,
+          videoUrl,
+          videoError: ''
+        });
+      } catch (videoErr) {
+        const msg = videoErr instanceof Error ? videoErr.message : String(videoErr);
+        console.error('[pipeline] video generation failed', { id, handle, error: videoErr });
+        await store.update(id, {
+          status: 'complete',
+          analysis,
+          videoError: msg.slice(0, 500)
+        });
+        log('complete without video (Magic Hour error)', { id, handle });
+      }
+    } else {
+      log('Magic Hour skipped — set MAGIC_HOUR_API_KEY in .env for AI video');
+      await store.update(id, {
+        status: 'complete',
+        analysis
+      });
+    }
     log('complete', { id, handle });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
