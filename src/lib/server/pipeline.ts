@@ -1,8 +1,6 @@
 import { store } from './db';
-import { scrapeProfile, scrapeTweets } from './scraper';
 import { stubProfile, stubTweets } from './stub-x-data';
 import type { ProfileData, TweetData } from './types';
-import { useApify } from './use-apify';
 import { analysePersonality } from './analyser';
 import { isExaConfigured, searchWebContextForPerson } from './exa';
 import { generateVideo, waitForVideo } from './magichour';
@@ -14,16 +12,9 @@ async function processHandle(id: string, handle: string): Promise<void> {
   try {
     await store.update(id, { status: 'scraping' });
 
-    let profile: ProfileData;
-    let tweets: TweetData[];
-    if (useApify()) {
-      log('scraping profile + tweets (Apify)…');
-      [profile, tweets] = await Promise.all([scrapeProfile(handle), scrapeTweets(handle)]);
-    } else {
-      log('Apify disabled — using stub profile + tweets');
-      profile = stubProfile(handle);
-      tweets = stubTweets(handle);
-    }
+    log('using stub profile + tweets');
+    const profile = stubProfile(handle);
+    const tweets = stubTweets(handle);
     log('scrape ok', { username: profile.username, tweetCount: tweets.length });
 
     await store.update(id, { 

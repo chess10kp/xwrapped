@@ -53,7 +53,7 @@ function formatResultsForPrompt(
 }
 
 /**
- * Public-web context for this account (Exa neural search + highlights), for LLM grounding alongside Apify tweets.
+ * Public-web context for this account (Exa neural search + highlights), for LLM grounding alongside tweet data.
  * Returns null if Exa is not configured or the request fails.
  */
 export async function searchWebContextForPerson(profile: ProfileData): Promise<string | null> {

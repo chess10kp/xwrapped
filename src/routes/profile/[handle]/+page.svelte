@@ -7,6 +7,7 @@
 		normTweetText
 	} from '$lib/tweet-stats';
 	import { computeTweetInsights } from '$lib/tweet-insights';
+	import { computeSentimentSummary } from '$lib/tweet-sentiment';
 	import type { PageData } from './$types';
 
 	let { data } = $props<{ data: PageData }>();
@@ -14,6 +15,11 @@
 	const tweetAgg = $derived(aggregateTweetStats(data.result.tweets));
 	const insights = $derived(
 		computeTweetInsights(data.result.tweets, {
+			kinds: data.tweetKinds ?? undefined
+		})
+	);
+	const sentiment = $derived(
+		computeSentimentSummary(data.result.tweets, {
 			kinds: data.tweetKinds ?? undefined
 		})
 	);
@@ -83,6 +89,17 @@
 
 	function hourUtcLabel(h: number): string {
 		return `${String(h).padStart(2, '0')}:00 UTC`;
+	}
+
+	function clipTweetSnippet(s: string, max = 200): string {
+		const t = s.trim();
+		if (t.length <= max) return t;
+		return `${t.slice(0, max)}…`;
+	}
+
+	function formatCompound(c: number): string {
+		const sign = c > 0 ? '+' : '';
+		return `${sign}${c.toFixed(2)}`;
 	}
 </script>
 
@@ -198,6 +215,79 @@
 					</div>
 				</div>
 			</div>
+			{#if sentiment}
+				<div class="border-b border-[#2f3336] px-4 py-5">
+					<p class="mb-1 text-xs font-medium uppercase tracking-wider text-[#71767b]">Sentiment (NLP)</p>
+					<p class="mb-3 text-[12px] leading-snug text-[#71767b]">
+						VADER scores (English-oriented). Positive / neutral / negative use the usual ±0.05 compound cutoffs.
+						{#if sentiment.excludeReposts && sentiment.skippedReposts > 0}
+							<span class="text-[#536471]">
+								· {sentiment.skippedReposts} repost{sentiment.skippedReposts === 1 ? '' : 's'} excluded.
+							</span>
+						{/if}
+					</p>
+					<div class="mb-4 flex h-3 w-full max-w-md overflow-hidden rounded-full bg-[#2f3336]" role="img" aria-label="Share of positive, neutral, and negative posts by VADER compound score">
+						{#if sentiment.positivePercent > 0}
+							<div
+								class="min-h-[2px] bg-[#00ba7c]"
+								style="width: {sentiment.positivePercent}%"
+								title="Positive {sentiment.positivePercent}%"
+							></div>
+						{/if}
+						{#if sentiment.neutralPercent > 0}
+							<div
+								class="min-h-[2px] bg-[#536471]"
+								style="width: {sentiment.neutralPercent}%"
+								title="Neutral {sentiment.neutralPercent}%"
+							></div>
+						{/if}
+						{#if sentiment.negativePercent > 0}
+							<div
+								class="min-h-[2px] bg-[#f4212e]"
+								style="width: {sentiment.negativePercent}%"
+								title="Negative {sentiment.negativePercent}%"
+							></div>
+						{/if}
+					</div>
+					<div class="mb-4 grid grid-cols-3 gap-2 sm:max-w-md">
+						<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2.5">
+							<p class="text-lg font-bold tabular-nums text-[#00ba7c]">{sentiment.positivePercent}%</p>
+							<p class="text-xs text-[#71767b]">Positive</p>
+						</div>
+						<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2.5">
+							<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{sentiment.neutralPercent}%</p>
+							<p class="text-xs text-[#71767b]">Neutral</p>
+						</div>
+						<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2.5">
+							<p class="text-lg font-bold tabular-nums text-[#f4212e]">{sentiment.negativePercent}%</p>
+							<p class="text-xs text-[#71767b]">Negative</p>
+						</div>
+					</div>
+					<p class="mb-4 text-[15px] text-[#e7e9ea]">
+						<span class="text-[#71767b]">Mean compound:</span>
+						<span class="ml-1 font-mono font-semibold tabular-nums">{formatCompound(sentiment.meanCompound)}</span>
+						<span class="text-[#71767b]"> · {sentiment.scoredCount} posts scored</span>
+					</p>
+					<div class="grid gap-3 sm:grid-cols-2">
+						{#if sentiment.mostPositive}
+							<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
+								<p class="text-xs font-medium text-[#00ba7c]">Sweetest · {formatCompound(sentiment.mostPositive.compound)}</p>
+								<p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-snug text-[#e7e9ea]">
+									{clipTweetSnippet(sentiment.mostPositive.tweet.text)}
+								</p>
+							</div>
+						{/if}
+						{#if sentiment.mostNegative}
+							<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
+								<p class="text-xs font-medium text-[#f4212e]">Saltiest · {formatCompound(sentiment.mostNegative.compound)}</p>
+								<p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-snug text-[#e7e9ea]">
+									{clipTweetSnippet(sentiment.mostNegative.tweet.text)}
+								</p>
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/if}
 		{:else}
 			<div class="border-b border-[#2f3336] px-4 py-5">
 				<p class="mb-1 text-xs font-medium uppercase tracking-wider text-[#71767b]">Post data</p>

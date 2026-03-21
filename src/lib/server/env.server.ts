@@ -9,8 +9,8 @@
  * then `configureMongoUri()` before touching the DB.
  */
 export {
-  APIFY_API_TOKEN,
   DEMO_MODE,
+  EXA_API_KEY,
   MAGIC_HOUR_API_KEY,
   MONGODB_URI,
   OPENROUTER_API_KEY,
