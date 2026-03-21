@@ -190,6 +190,20 @@
 					Video could not be generated ({data.result.videoError}). Check the server log and your Magic Hour
 					account credits.
 				</p>
+				{#if data.canRegenerateVideo}
+					<button
+						type="button"
+						title="Clears the failed state and requests a new Magic Hour render."
+						disabled={regenerateBusy}
+						onclick={regenerateVideo}
+						class="mt-3 text-[13px] font-semibold text-[#1d9bf0] underline-offset-2 hover:underline disabled:opacity-50"
+					>
+						{regenerateBusy ? 'Starting…' : 'Try again (regenerate video)'}
+					</button>
+					{#if regenerateErr}
+						<p class="mt-1 text-[13px] text-[#f4212e]">{regenerateErr}</p>
+					{/if}
+				{/if}
 			</div>
 		{/if}
 

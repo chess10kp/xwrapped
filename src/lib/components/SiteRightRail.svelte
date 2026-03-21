@@ -15,6 +15,10 @@
 		return d;
 	});
 
+	const showWhatsHappening = $derived(
+		page.route.id !== '/loading/[handle]' && !profileWrappedLoad
+	);
+
 	const newsItems = [
 		{
 			category: 'Technology · Trending',
@@ -47,7 +51,7 @@
 				sections={['sentiment', 'patterns', 'tags']}
 			/>
 		</div>
-	{:else}
+	{:else if showWhatsHappening}
 		<!-- What's happening (default when not on a completed Wrapped profile) -->
 		<section
 			class="overflow-hidden rounded-2xl border border-[#2f3336] bg-black"
