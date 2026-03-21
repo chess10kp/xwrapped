@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY } from '$env/static/private';
+import { ANTHROPIC_API_KEY } from '$lib/server/env.server';
 import type { ProfileData, TweetData, PersonalityAnalysis } from './types';
 
 const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });

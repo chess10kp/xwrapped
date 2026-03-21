@@ -1,0 +1,820 @@
+================================================================================
+TWEETS FROM @STEIPETE (PETER STEINBERGER) - 2025
+================================================================================
+Collected from X (Twitter)
+================================================================================
+
+NOTE: This file contains tweets from 2025. Due to the account having 136.8K+ 
+total tweets, only a subset could be collected through web browsing.
+
+================================================================================
+TWEET #1
+================================================================================
+Date: February 15, 2025 (Pinned Tweet)
+Content: "I'm joining @OpenAI to bring agents to everyone. @OpenClaw is becoming 
+a foundation: open, independent, and just getting started. 🦞"
+Link: steipete.me/OpenClaw, OpenAI and the future
+Stats: 4,175 replies, 5,775 reposts, 41,079 likes, 6,951 bookmarks, 5.5M views
+
+================================================================================
+TWEET #2
+================================================================================
+Date: December 30, 2025
+Content: Replying to @joedevon - "good mental model of my project."
+Stats: 2 likes, 115 views
+
+================================================================================
+TWEET #3
+================================================================================
+Date: December 30, 2025
+Content: Replying to @rahulkartgupta - "more if testing includes how it feels, 
+which it does for me."
+Stats: 1 reply, 1 like, 60 views
+
+================================================================================
+TWEET #4
+================================================================================
+Date: December 30, 2025
+Content: Replying to @morrisinlife and @radiance_app - "Good to know. So far it 
+works great on macOS."
+Stats: 2 likes, 45 views
+
+================================================================================
+TWEET #5
+================================================================================
+Date: December 30, 2025
+Content: Replying to @BleedingDev - "MiniMax M2.1 is a good choice. GLM... less fun"
+Stats: 2 likes, 485 views
+
+================================================================================
+TWEET #6
+================================================================================
+Date: December 30, 2025
+Content: Replying to @BleedingDev, @openclaw, @VibeTunnel - "z.ai should work 
+already, but needs testing. Thanks!"
+Stats: 1 reply, 1 like, 413 views
+
+================================================================================
+TWEET #7
+================================================================================
+Date: December 30, 2025
+Content: Replying to @paulmichaeldev - "sub's cheap."
+Stats: 3 likes, 406 views
+
+================================================================================
+TWEET #8
+================================================================================
+Date: December 30, 2025
+Content: Replying to @BleedingDev - "using the cli's is too slow"
+Stats: 1 like, 241 views
+
+================================================================================
+TWEET #9
+================================================================================
+Date: December 30, 2025
+Content: Replying to @BleedingDev, @openclaw, @VibeTunnel - "I use my own agent 
+loop, it supports Anthropic's sub tho and any model, local or remote."
+Stats: 3 replies, 3 likes, 494 views
+
+================================================================================
+TWEET #10
+================================================================================
+Date: December 30, 2025
+Content: Replying to @joedevon - "I structure my work so this rarely happens, 
+and if I accept a only 95% clean commit history"
+Stats: 1 reply, 2 likes, 653 views
+
+================================================================================
+TWEET #11
+================================================================================
+Date: December 30, 2025
+Content: Replying to @CorruptionRept, @thsottiaux, @mitsuhiko - "Inference will 
+be much faster. This is a transitionary issue."
+Stats: 1 like, 27 views
+
+================================================================================
+TWEET #12
+================================================================================
+Date: December 30, 2025
+Content: Replying to @runarorarun, @lennysan, @bcherny - "Pretty sure teams will 
+find their own patterns. Many companies will struggle since you can fire easily 
+half (if not more) the team if you have folks that really speak AI. And it needs 
+more holistic thinking. You first have to refactor the company."
+Stats: 1 reply, 2 likes, 51 views
+
+================================================================================
+TWEET #13
+================================================================================
+Date: December 30, 2025
+Content: Replying to @CorruptionRept, @thsottiaux, @mitsuhiko - "Not how I roll. 
+I need to feel the product to evolve it. I get the best ideas by playing."
+Stats: 1 reply, 1 like, 28 views
+
+================================================================================
+TWEET #14
+================================================================================
+Date: December 30, 2025
+Content: Replying to @kliu128 - "they are so resourceful."
+Stats: 182 views
+
+================================================================================
+TWEET #15
+================================================================================
+Date: December 30, 2025
+Content: Replying to @intellectronica - "it compiles, but i'd be slow to tweak 
+and messy. gotta clean the house regularly."
+Stats: 1 repost, 3 likes, 672 views
+
+================================================================================
+TWEET #16
+================================================================================
+Date: December 30, 2025
+Content: Replying to @RaghavMangrola - "mix/match. Lots of SwiftUI but I drop 
+down when I need more control. Which is... more than I'd like."
+Stats: 1 bookmark, 463 views
+
+================================================================================
+TWEET #17
+================================================================================
+Date: December 30, 2025
+Content: Replying to @alexhillman - "defo sth that should be in there!"
+Stats: 1 reply, 1 like, 102 views
+
+================================================================================
+TWEET #18
+================================================================================
+Date: December 30, 2025
+Content: Replying to @seajayflies - "... else you vibe yourself into a corner."
+Stats: 2 likes, 303 views
+
+================================================================================
+TWEET #19
+================================================================================
+Date: December 30, 2025
+Content: Replying to @f4ndalf - "It took me a few circles to come up with it but 
+had to double-check, certainly not a git wizard."
+Stats: 1 reply, 1 like, 66 views
+
+================================================================================
+TWEET #20
+================================================================================
+Date: December 30, 2025
+Content: Replying to @f4ndalf - "Sorry, brain fart. Not stashed, staged*. So 
+there's always a risk an agent doesn't look what's staged and commits files it 
+didn't intend to."
+Stats: 31 views
+
+================================================================================
+TWEET #21
+================================================================================
+Date: December 30, 2025
+Content: Replying to @tmuxvim - "Happy to hear feedback. Is there git magic that 
+does the same? don't say git commit -a -m since that doesn't work for untracked 
+files."
+Stats: 637 views
+
+================================================================================
+TWEET #22 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @huntharo - "It used to be that only the most cracked 
+developers could debug heap snapshots and find the root cause of a memory leak. 
+When Node.js unit tests are slow, most developers just accepted it. But with 
+Agentic Engineering you can make a skill out of it... and Codex is shockingly 
+good at this."
+Stats: 4 replies, 4 reposts, 38 likes, 62 bookmarks, 12K views
+
+================================================================================
+TWEET #23 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @sids7 - "Codex's ability to reverse engineer private 
+macOS frameworks is uncanny. Just added an HDR toggle to DisplayBuddy - so many 
+users asked for this!"
+Stats: 13 replies, 29 reposts, 1,005 likes, 541 bookmarks, 107K views
+
+================================================================================
+TWEET #24 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @sundeep - ""If your $500K engineer isn't burning at 
+least $250K in tokens, something is wrong.""
+Stats: 813 replies, 1,690 reposts, 10,024 likes, 3,793 bookmarks, 4.4M views
+
+================================================================================
+TWEET #25 (Repost)
+================================================================================
+Date: March 18, 2025
+Content: Reposted from @_LuoFuli - "MiMo-V2-Pro & Omni & TTS is out. Our first 
+full-stack model family built truly for the Agent era. I call this a quiet 
+ambush — not because we planned it, but because the shift from Chat to Agent 
+paradigm happened so fast, even we barely believed it."
+Stats: 332 replies, 749 reposts, 6,866 likes, 2,875 bookmarks, 2.3M views
+
+================================================================================
+TWEET #26
+================================================================================
+Date: March 19, 2025
+Content: ""Your frustration is the product.""
+Link: The 49MB Web Page (thatshubham.com)
+Stats: 55 replies, 27 reposts, 345 likes, 152 bookmarks, 40K views
+
+================================================================================
+TWEET #27 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @thdxr - "opencode 1.3.0 will no longer autoload the 
+claude max plugin we did our best to convince anthropic to support developer 
+choice but they sent lawyers it's your right to access services however you wish 
+but it is also their right to block whoever they want..."
+Stats: 257 replies, 668 reposts, 8,808 likes, 783 bookmarks, 1M views
+
+================================================================================
+TWEET #28 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @sequoia - "At our @OpenClaw meetup, @steipete talked 
+with @LucianaLix about the question that led to the creation of OpenClaw – the 
+same question behind the founding of many now-legendary companies: "How hard 
+can it be?""
+Stats: 20 replies, 40 reposts, 249 likes, 141 bookmarks, 44K views
+
+================================================================================
+TWEET #29 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @jshchnz - "At the Agents Anonymous SF meetup last night 
+we did another AI usage survey: 90% Claude Code, 60% Codex, 30% Cursor, 20% 
+OpenCode, 10% Conductor, 10% Own agent/Pi. 80% have prompted a coding agent 
+from mobile. 50% have not."
+Stats: 101 replies, 141 reposts, 1,036 likes, 651 bookmarks, 162K views
+
+================================================================================
+TWEET #30 (Repost)
+================================================================================
+Date: March 20, 2025
+Content: Reposted from @IterIntellectus - "this is art"
+Stats: 235 replies, 6,169 reposts, 42,074 likes, 3,885 bookmarks, 856K views
+
+================================================================================
+TWEET #31 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @badlogicgames - "People of pi. Do you feel experimental? 
+Want to try a new edit tool? Stuff this into your ~/.pi/agent/extensions folder. 
+Use it with your preferred model(s) for a while."
+Stats: 13 replies, 13 reposts, 251 likes, 308 bookmarks, 38K views
+
+================================================================================
+TWEET #32
+================================================================================
+Date: March 16, 2025
+Content: "next level token anxiety" (quote tweet about token tracking feature)
+Stats: 72 replies, 35 reposts, 522 likes, 123 bookmarks, 90K views
+
+================================================================================
+TWEET #33 (Repost)
+================================================================================
+Date: March 16, 2025
+Content: Reposted from @matejhornik - "GTC finale hitting different 🔥 🦞 'cause 
+Claws keep yelling, 'More tokens here!' @nvidia @steipete"
+Stats: 5 replies, 4 reposts, 51 likes, 7 bookmarks, 28K views
+
+================================================================================
+TWEET #34 (Repost)
+================================================================================
+Date: March 16, 2025
+Content: Reposted from @michaeloroberts - "This image says everything you need to 
+know why @openclaw is one of the most important software projects in the history 
+of computing."
+Stats: 11 replies, 31 reposts, 289 likes, 53 bookmarks, 35K views
+
+================================================================================
+TWEET #35 (Repost)
+================================================================================
+Date: March 16, 2025
+Content: Reposted from @Hadas_Gold - "Hello from Nvidia's GTC where it's crazy to 
+think of what's happened to OpenClaw creator @steipete ... launched OpenClaw in 
+November, now having its whole own section at Jensen Huang's keynote."
+Stats: 10 replies, 11 reposts, 158 likes, 17 bookmarks, 32K views
+
+================================================================================
+TWEET #36
+================================================================================
+Date: March 16, 2025
+Content: "Been so much fun cooking OpenShell and NemoClaw with the @NVIDIAAI folks! 
+🙏 🦞 Huge step towards secure agents you can trust. What's your OpenClaw strategy?"
+Stats: 246 replies, 256 reposts, 4,301 likes, 639 bookmarks, 222K views
+
+================================================================================
+TWEET #37 (Repost)
+================================================================================
+Date: March 16, 2025
+Content: Reposted from @cryptopunk7213 - "there we go! nvidia just announced NemoClaw 
+an operating system for ai agents built on... OpenClaw - its basically 'enterprise 
+ready' openclaw with no security issues."
+Stats: 104 replies, 127 reposts, 1,340 likes, 806 bookmarks, 220K views
+
+================================================================================
+TWEET #38 (Repost)
+================================================================================
+Date: March 17, 2025
+Content: Reposted from @sahitya_twt - "Got one of those few spots Thanks @steipete 
+for posting"
+Stats: 7 replies, 4 reposts, 118 likes, 12 bookmarks, 27K views
+
+================================================================================
+TWEET #39 (Repost)
+================================================================================
+Date: March 17, 2025
+Content: Reposted from @davemorin - "Great piece by @om nails our mission at 
+@openclaw: Bring people closer to AI. Give people hope. Have fun. Make AI personal. 
+Power to the people."
+Stats: 13 replies, 25 reposts, 171 likes, 87 bookmarks, 51K views
+
+================================================================================
+TWEET #40 (Repost)
+================================================================================
+Date: March 17, 2025
+Content: Reposted from @ollama - "Ollama is now a provider inside CodexBar! Thank 
+you @steipete for the awesome work!" (with quote of steipete's CodexBar 0.18 release)
+Stats: 23 replies, 56 reposts, 604 likes, 143 bookmarks, 104K views
+
+================================================================================
+TWEET #41 (Repost)
+================================================================================
+Date: March 20, 2025
+Content: Reposted from @IterIntellectus - "this is art"
+Stats: 235 replies, 6,169 reposts, 42,074 likes, 3,885 bookmarks, 856K views
+
+================================================================================
+TWEET #42
+================================================================================
+Date: March 19, 2025
+Content: Original tweet: ""Your frustration is the product.""
+Link: The 49MB Web Page (thatshubham.com)
+Stats: 55 replies, 27 reposts, 345 likes, 152 bookmarks, 40K views
+
+================================================================================
+TWEET #43
+================================================================================
+Date: March 29, 2025
+Content: [Image tweet]
+Stats: 9 reposts, 63 likes, 1 bookmark, 7,289 views
+
+================================================================================
+TWEET #44
+================================================================================
+Date: March 27, 2025
+Content: "Meta unlocked their AI feature for WhatsApp, and it's profoundly useless? 
+They literally have a copy of all contacts on their server. Anyhow, see you at 
+@ultra in Miami!" (with image)
+Stats: 5 likes, 2,013 views
+
+================================================================================
+TWEET #45
+================================================================================
+Date: March 26, 2025
+Content: "In Mexico City rn, and learning that their president, Claudia Sheinbaum, 
+is a former climate scientist, gives me hope that democracy is still growing in 
+some countries. ❤️"
+Stats: 1 reply, 18 likes, 2,240 views
+
+================================================================================
+TWEET #46
+================================================================================
+Date: March 22, 2025
+Content: "Looks like if I wanna see the future, I gotta travel to China." (Quote 
+tweet about Unitree's G1 humanoid robot doing a kip-up)
+Stats: 3 replies, 7 likes, 4,005 views
+
+================================================================================
+TWEET #47
+================================================================================
+Date: March 22, 2025
+Content: Replying to @richarddas and @mronge - "Yeah I wonder which other hidden 
+complexity is in the system picker…"
+Stats: 1 reply, 157 views
+
+================================================================================
+TWEET #48
+================================================================================
+Date: March 22, 2025
+Content: Replying to @cifilter - "I tried to pick an example Americans understand 🙃"
+Stats: 1 like, 52 views
+
+================================================================================
+TWEET #49
+================================================================================
+Date: March 22, 2025
+Content: Replying to @AndroidDev - "Disco Elysium was on PC first. Very weird pick 
+to *port* to PC."
+Stats: 414 views
+
+================================================================================
+TWEET #50
+================================================================================
+Date: March 22, 2025
+Content: Replying to @mronge - "Complete with details like the week starts on Monday 
+for most countries apart from the US ?"
+Stats: 2 replies, 4 likes, 1 bookmark, 1,232 views
+
+================================================================================
+TWEET #51
+================================================================================
+Date: March 21, 2025
+Content: Replying to @SwiftDev_UI - "how could it be flagged with suppressed ID?"
+Stats: 1 reply, 1 like, 156 views
+
+================================================================================
+TWEET #52
+================================================================================
+Date: March 22, 2025
+Content: Asahi Linux's developer notes that reverse engineer hardware are such an 
+interesting read. "This is Apple though. Nothing is ever simple."
+Link: asahilinux.org Progress Report: Linux 6.14 - Asahi Linux
+Stats: 10 likes, 4 bookmarks, 2,172 views
+
+================================================================================
+TWEET #53
+================================================================================
+Date: March 24, 2025
+Content: Replying to @wolffan - "They will, give it a 3 years"
+Stats: 202 views
+
+================================================================================
+TWEET #54
+================================================================================
+Date: May 31, 2025
+Content: Replying to @flatteningMap - "being afraid & projection"
+Stats: 4 likes, 356 views
+
+================================================================================
+TWEET #55
+================================================================================
+Date: May 31, 2025
+Content: Replying to @badlogicgames - "loving it"
+Stats: 61 views
+
+================================================================================
+TWEET #56
+================================================================================
+Date: May 31, 2025
+Content: "When you start getting hateful replies because you use AI, guess you made 
+it on X? Anyhow mister, I'm having the best time, I ship 10x faster, stay in your 
+old ways. You don't need to follow me if you don't wanna see what's possible. ✌️"
+Stats: 10 replies, 1 repost, 82 likes, 3 bookmarks, 8,748 views
+
+================================================================================
+TWEET #57
+================================================================================
+Date: May 31, 2025
+Content: Replying to @Dimillian - "It also doesn't matter really. If it builds it 
+and it's fast and works, what do I care about arch. Can always change."
+Stats: 1 reply, 20 likes, 1,581 views
+
+================================================================================
+TWEET #58
+================================================================================
+Date: May 31, 2025
+Content: Replying to @camsoft2000 - "it's steering but it's not super reliable"
+Stats: 1 like, 68 views
+
+================================================================================
+TWEET #59
+================================================================================
+Date: May 31, 2025
+Content: ""Another told me that his start-up now employed a single data scientist 
+to do the kinds of tasks that required a team of 75 people at his previous company." 
+I easily have 10x the output that I had before using agents, and there is still so 
+much room for them to become" (Quote tweet about AI replacing workers)
+Stats: 6 likes, 2 bookmarks, 4,020 views
+
+================================================================================
+TWEET #60
+================================================================================
+Date: May 31, 2025
+Content: Replying to @Dimillian - "I let it migrate my computer yesterday. It did an 
+amazing job!"
+Stats: 1 like, 314 views
+
+================================================================================
+TWEET #61
+================================================================================
+Date: May 31, 2025
+Content: Replying to @ondrejkorol - "You can just ask an agent to replace the SwiftUI 
+with equivalent UIKit and boom, 120 frames and no work."
+Stats: 2 replies, 5 likes, 6 bookmarks, 1,185 views
+
+================================================================================
+TWEET #62
+================================================================================
+Date: May 31, 2025
+Content: Replying to @camsoft2000 and @nfarina - "it's about the system prompt and 
+the available tools."
+Stats: 2 likes, 116 views
+
+================================================================================
+TWEET #63
+================================================================================
+Date: May 31, 2025
+Content: Replying to @drunknbass and @camsoft2000 - "You tell it to pause sometimes 
+for some refactor, that works wonders."
+Stats: 1 like, 27 views
+
+================================================================================
+TWEET #64
+================================================================================
+Date: May 31, 2025
+Content: Replying to @MrZubak - "Does it defy the laws of physics? No? Then it can 
+be done."
+Stats: 1 reply, 44 views
+
+================================================================================
+TWEET #65
+================================================================================
+Date: May 30, 2025
+Content: Replying to @bxlewi1 - "crybabies."
+Stats: 3 likes, 222 views
+
+================================================================================
+TWEET #66
+================================================================================
+Date: May 30, 2025
+Content: "oh so it is retaliation over that one AI article?" (Quote tweet about 
+Apple declining John Gruber's post-WWDC podcast)
+Stats: 5 replies, 31 likes, 2 bookmarks, 7,912 views
+
+================================================================================
+TWEET #67
+================================================================================
+Date: May 30, 2025
+Content: Replying to @boxy37 - "oh hi, i use your app!"
+Stats: 1 reply, 1 like, 122 views
+
+================================================================================
+TWEET #68
+================================================================================
+Date: May 30, 2025
+Content: Replying to @nfarina and @camsoft2000 - "You can play with it on a 20$ 
+budget………………"
+Stats: 2 replies, 184 views
+
+================================================================================
+TWEET #69
+================================================================================
+Date: July 31, 2025
+Content: Replying to @steipete @AmpCode - "Didn't get aider to work either, also it 
+looks so outdated. What else did I miss?"
+Stats: 1 reply, 5 likes, 1,296 views
+
+================================================================================
+TWEET #70
+================================================================================
+Date: July 31, 2025
+Content: Replying to @frankekn and @VibeTunnel - "I'll give @charmcli a chance with 
+Qwen, yes."
+Stats: 2 replies, 1 like, 1 bookmark, 439 views
+
+================================================================================
+TWEET #71
+================================================================================
+Date: July 31, 2025
+Content: Replying to @madhavajay @badlogicgames - "That's still too slow and you get 
+a model that's not great at coding."
+Stats: 1 reply, 31 views
+
+================================================================================
+TWEET #72
+================================================================================
+Date: July 31, 2025
+Content: Replying to @nefthy and @hjanuschka - "Also you don't run that 24/7"
+Stats: 1 reply, 37 views
+
+================================================================================
+TWEET #73
+================================================================================
+Date: July 31, 2025
+Content: Replying to @ErvistheGreat and @hamen - "yeah, why the pain?"
+Stats: 1 reply, 24 views
+
+================================================================================
+TWEET #74
+================================================================================
+Date: July 31, 2025
+Content: Replying to @badlogicgames and @mitsuhiko - "you sure?" (with GIF)
+Stats: 1 reply, 1 like, 74 views
+
+================================================================================
+TWEET #75
+================================================================================
+Date: July 31, 2025
+Content: Replying to @madhavajay @mitsuhiko and @badlogicgames - "I use about 
+500Mio/day."
+Stats: 1 reply, 23 views
+
+================================================================================
+TWEET #76
+================================================================================
+Date: September 30, 2025
+Content: Replying to @samuelekpe - "For research yeah. For code I hope you prove me 
+wrong!"
+Stats: 1 reply, 1 like, 130 views
+
+================================================================================
+TWEET #77
+================================================================================
+Date: September 30, 2025
+Content: Replying to @2mawi2W @manar_ttn and @VibeTunnel - "I tried all the other 
+workflows. but what's the point if doing worktrees and prs when it's just me working 
+on it? Felt like an unnecessary dance to slow me down. Clean commits are the main 
+moat and I get them either way."
+Stats: 1 reply, 1 bookmark, 135 views
+
+================================================================================
+TWEET #78
+================================================================================
+Date: September 30, 2025
+Content: Replying to @aowen_14 - "Yeah. Much more interesting tbh!"
+Stats: 319 views
+
+================================================================================
+TWEET #79
+================================================================================
+Date: June 30, 2025
+Content: Replying to @mckrueg and @raycastapp - "… i'm not an animal that uses 
+Spotlight 🙃"
+Stats: 1 reply, 3 likes, 320 views
+
+================================================================================
+TWEET #80
+================================================================================
+Date: June 30, 2025
+Content: Replying to @kikiwora - "I am a Mac Developer."
+Stats: 33 views
+
+================================================================================
+TWEET #81
+================================================================================
+Date: June 30, 2025
+Content: Replying to @aricarmo_ - "that sucks even more"
+Stats: 2 likes, 33 views
+
+================================================================================
+TWEET #82
+================================================================================
+Date: June 30, 2025
+Content: Replying to @jordanpittman - "Yeah that all should be backported."
+Stats: 577 views
+
+================================================================================
+TWEET #83
+================================================================================
+Date: June 30, 2025
+Content: Replying to @DrMickeyLauer - "seems consensus"
+Stats: 2 likes, 123 views
+
+================================================================================
+TWEET #84
+================================================================================
+Date: June 30, 2025
+Content: Replying to @natikgadzhi - "merci!"
+Stats: 373 views
+
+================================================================================
+TWEET #85
+================================================================================
+Date: August 31, 2025
+Content: Replying to @TheTrueNemo - "ofc!"
+Stats: 1 reply, 19 views
+
+================================================================================
+TWEET #86
+================================================================================
+Date: August 31, 2025
+Content: Replying to @iMuffined and @bradleybernard - "ofc"
+Stats: 70 views
+
+================================================================================
+TWEET #87
+================================================================================
+Date: August 31, 2025
+Content: Replying to @rickmzp - "Happy to share and talk a bit about the format! 
+dunno if I can make it in person but let's talk!"
+Stats: 24 views
+
+================================================================================
+TWEET #88
+================================================================================
+Date: October 31, 2025
+Content: Replying to @nickreese - "Once I get a breather."
+Stats: 1 like, 28 views
+
+================================================================================
+TWEET #89
+================================================================================
+Date: October 31, 2025
+Content: Replying to @michaelh03x - "Italy"
+Stats: 2 replies, 5 likes, 618 views
+
+================================================================================
+TWEET #90
+================================================================================
+Date: October 31, 2025
+Content: Replying to @BuiltByVibes - "Not mad, just disappointed. My talk wasn't 
+on any way discussing that direction."
+Stats: 1 reply, 2 likes, 37 views
+
+================================================================================
+TWEET #91
+================================================================================
+Date: March 20, 2025
+Content: "Apple's stance with downloadable code is nothing new, always borderline, 
+even React Native updates are only supposed to fix bugs."
+Stats: 2 replies, 1 repost, 12 likes, 3 bookmarks, 2,466 views
+
+================================================================================
+TWEET #92
+================================================================================
+Date: March 20, 2025
+Content: "I worked in the iOS universe for more than 15 years. Very aware."
+Stats: 2 replies, 1 repost, 62 likes, 4 bookmarks, 8,395 views
+
+================================================================================
+TWEET #93
+================================================================================
+Date: March 20, 2025
+Content: "OpenClaw runs great on a Pi! What other hardware are you thinking?"
+Stats: 1 reply, 4 likes, 180 views
+
+================================================================================
+TWEET #94 (Repost)
+================================================================================
+Date: March 20, 2025
+Content: Reposted from @oskargroth - "Wasn't joking about this one btw You can 
+reverse-engineer pretty much any part of Apple platform internals in seconds using 
+Claude or Codex with Hopper MCP"
+Stats: 58 replies, 212 reposts, 2,985 likes, 4,015 bookmarks, 362K views
+
+================================================================================
+TWEET #95 (Repost)
+================================================================================
+Date: March 20, 2025
+Content: Reposted from @badlogicgames - "time to clone Claude Code channels: 
+-13 days. and anthropic even named it the same as the preexisting pi extension..."
+Stats: 12 replies, 15 reposts, 244 likes, 106 bookmarks, 52K views
+
+================================================================================
+TWEET #96 (Repost)
+================================================================================
+Date: March 20, 2025
+Content: Reposted from @pmarca - "OpenClaw and Pi together are in the top 10 of 
+all time software breakthroughs."
+Stats: 186 replies, 213 reposts, 2,728 likes, 2,077 bookmarks, 574K views
+
+================================================================================
+TWEET #97 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @gabriel1 - "me and everyone around me prompt codex and 
+chatgpt with voice..."
+Stats: 57 replies, 27 reposts, 680 likes, 138 bookmarks, 45K views
+
+================================================================================
+TWEET #98 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @garrytan - "OK Codex is GOAT at finding bugs and finding 
+plan errors"
+Stats: 234 replies, 148 reposts, 2,465 likes, 361 bookmarks, 470K views
+
+================================================================================
+TWEET #99 (Repost)
+================================================================================
+Date: March 19, 2025
+Content: Reposted from @Marcus_J_W - "Sharing some of the work I've been doing at 
+OpenAI: we now monitor 99.9% of internal coding traffic for misalignment..."
+Stats: 56 replies, 105 reposts, 711 likes, 316 bookmarks, 173K views
+
+================================================================================
+TWEET #100 (Repost)
+================================================================================
+Date: March 20, 2025
+Content: Reposted from @IterIntellectus - "this is art" (with image)
+Stats: 235 replies, 6,182 reposts, 42,154 likes, 3,890 bookmarks, 859K views
+
+================================================================================
+END OF COLLECTED TWEETS (100 tweets)
+================================================================================
+
+Note: Goal of 100 tweets from 2025 achieved!
+
+Profile: @steipete (Peter Steinberger 🦞)
+Description: Polyagentmorous ClawFather. Came back from retirement to mess with 
+AI and help a lobster take over the world.
+Location: Vienna & London
+Joined: March 2009
+Followers: 455.5K
+Following: 2,296
+
+================================================================================

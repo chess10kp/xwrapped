@@ -1,5 +1,5 @@
 import { Client } from 'magic-hour';
-import { MAGIC_HOUR_API_KEY } from '$env/static/private';
+import { MAGIC_HOUR_API_KEY } from '$lib/server/env.server';
 import type { PersonalityAnalysis } from './types';
 
 const client = new Client({ token: MAGIC_HOUR_API_KEY });

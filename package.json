@@ -10,7 +10,10 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"precache": "tsx scripts/precache.ts"
+		"precache": "tsx scripts/precache.ts",
+		"import-tweets": "tsx scripts/import-steipete-tweets.ts",
+		"verify:mongo": "tsx scripts/verify-mongo-env.ts",
+		"encode:mongo-password": "tsx scripts/encode-mongo-password.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.0",

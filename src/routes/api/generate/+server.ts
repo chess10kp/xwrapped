@@ -17,12 +17,24 @@ export async function POST({ request }) {
 
   const id = cleanedHandle;
 
-  await store.set(id, {
-    id,
-    handle: cleanedHandle, 
-    status: 'scraping', 
-    createdAt: new Date() 
-  });
+  try {
+    await store.set(id, {
+      id,
+      handle: cleanedHandle,
+      status: 'scraping',
+      createdAt: new Date()
+    });
+  } catch (err) {
+    console.error('[api/generate] database error:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    return json(
+      {
+        error: 'Database unavailable',
+        ...(import.meta.env.DEV && { detail: message })
+      },
+      { status: 503 }
+    );
+  }
 
   processHandle(id, cleanedHandle);
 

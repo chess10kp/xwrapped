@@ -1,5 +1,9 @@
 import { MongoClient, type Db } from 'mongodb';
 
+/**
+ * Optional override (scripts/tests). Otherwise uses `MONGODB_URI` from `.env` via
+ * `process.env` (Vite dev/preview, production, and `tsx` + dotenv all set this).
+ */
 let configuredUri: string | null = null;
 let client: MongoClient | null = null;
 let indexesEnsured = false;
@@ -9,12 +13,13 @@ export function configureMongoUri(uri: string): void {
 }
 
 function getUri(): string {
-	if (!configuredUri) {
+	const uri = configuredUri ?? process.env.MONGODB_URI;
+	if (!uri?.trim()) {
 		throw new Error(
 			'MongoDB URI is not configured. Add MONGODB_URI to .env (see .env.example) or call configureMongoUri() before using the store.'
 		);
 	}
-	return configuredUri;
+	return uri;
 }
 
 export async function getMongoClient(): Promise<MongoClient> {
@@ -29,11 +34,13 @@ export async function getDb(): Promise<Db> {
 	const c = await getMongoClient();
 	const db = c.db('xwrapped');
 	if (!indexesEnsured) {
-		const coll = db.collection('wrapped');
+		const wrapped = db.collection('wrapped');
 		await Promise.all([
-			coll.createIndex({ handle: 1 }),
-			coll.createIndex({ createdAt: -1 }),
-			coll.createIndex({ status: 1 }),
+			wrapped.createIndex({ handle: 1 }),
+			wrapped.createIndex({ createdAt: -1 }),
+			wrapped.createIndex({ status: 1 }),
+			db.collection('tweet_archives').createIndex({ handle: 1 }),
+			db.collection('tweet_archives').createIndex({ importedAt: -1 }),
 		]);
 		indexesEnsured = true;
 	}

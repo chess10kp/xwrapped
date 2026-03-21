@@ -1,5 +1,5 @@
 import { ApifyClient } from 'apify-client';
-import { APIFY_API_TOKEN } from '$env/static/private';
+import { APIFY_API_TOKEN } from '$lib/server/env.server';
 import type { ProfileData, TweetData } from './types';
 
 const client = new ApifyClient({ token: APIFY_API_TOKEN });
