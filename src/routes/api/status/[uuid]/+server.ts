@@ -1,0 +1,19 @@
+import { json } from '@sveltejs/kit';
+import { store } from '$lib/server/store';
+
+export async function GET({ params }) {
+  const result = store.get(params.uuid);
+  
+  if (!result) {
+    return json({ error: 'Not found' }, { status: 404 });
+  }
+
+  return json({
+    status: result.status,
+    analysis: result.analysis,
+    videoUrl: result.videoUrl,
+    handle: result.handle,
+    profile: result.profile,
+    error: result.error,
+  });
+}
