@@ -14,9 +14,11 @@
 
 <div class="flex min-h-screen bg-black text-[#e7e9ea]">
 	<SiteSidebar />
-	<div class="flex min-h-0 min-w-0 flex-1">
-		<div class="min-h-screen w-full max-w-[600px] shrink-0 border-r border-[#2f3336]">
-			{@render children()}
+	<div class="flex min-h-0 min-w-0 flex-1 flex-nowrap">
+		<div class="flex min-h-0 min-w-0 flex-1 justify-center">
+			<div class="min-h-screen w-full max-w-[600px] shrink-0 border-r border-[#2f3336]">
+				{@render children()}
+			</div>
 		</div>
 		<SiteRightRail />
 	</div>

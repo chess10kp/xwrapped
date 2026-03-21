@@ -84,6 +84,8 @@ ${webSearchContext.trim()}
 
   return `You are an expert personality analyst. Analyse this X (Twitter) user's public profile and recent tweets. Return ONLY valid JSON matching this exact schema — no markdown, no explanation.
 
+Writing style for ALL string fields: sound like a sharp human, not a brochure. Be concrete. Never use filler phrases, buzzwords, or "AI voice" (e.g. avoid: delve, tapestry, landscape, journey, unlock, navigate, realm, vibrant, robust, in today's world, at the end of the day, it goes without saying).
+
 ## Profile
 - Handle: @${profile.username}
 - Name: ${profile.name}
@@ -106,7 +108,7 @@ ${tweetTexts}
   "peak_hour": "Best guess of their most active posting time, e.g. '2am'",
   "best_tweet": "Copy the single most characteristic/engaging tweet verbatim",
   "best_tweet_why": "One sentence on why this tweet captures their essence",
-  "vibe_summary": "A 2-sentence cinematic description of this person's X presence, suitable for a video narration",
+  "vibe_summary": "Exactly two short sentences: what this account is actually like to follow, in plain English. Pull in specific habits or topics from the tweets. No hype, no trailer narration, no summary-of-a-summary.",
   "colour_mood": "A visual mood for video generation: e.g. 'neon cyberpunk', 'warm sunset', 'dark academia'"
 }`;
 }

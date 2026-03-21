@@ -31,3 +31,17 @@ export interface TweetArchiveDocument {
 	tweets: ArchivedTweet[];
 	footer?: TweetExportFooter;
 }
+
+/** Strip archive-only fields for UI / stats (matches `TweetData`). */
+export function archivedTweetsToTweetData(tweets: ArchivedTweet[]): TweetData[] {
+	return tweets.map((t) => ({
+		text: typeof t.text === 'string' ? t.text : '',
+		createdAt: typeof t.createdAt === 'string' ? t.createdAt : new Date().toISOString(),
+		likeCount: Number(t.likeCount) || 0,
+		retweetCount: Number(t.retweetCount) || 0,
+		replyCount: Number(t.replyCount) || 0,
+		viewCount: Number(t.viewCount) || 0,
+		hashtags: Array.isArray(t.hashtags) ? t.hashtags : [],
+		mentions: Array.isArray(t.mentions) ? t.mentions : []
+	}));
+}

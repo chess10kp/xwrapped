@@ -1,12 +1,73 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import ProfileAvatar from '$lib/components/ProfileAvatar.svelte';
 
 	const path = $derived(page.url.pathname);
 	const isHome = $derived(path === '/');
 	const profileHandle = $derived(
 		path.startsWith('/profile/') ? (page.params.handle as string | undefined) : undefined
 	);
+	/** Profile or loading route — used for account bubble + PFP. */
+	const sidebarHandle = $derived(
+		path.startsWith('/profile/') || path.startsWith('/loading/')
+			? (page.params.handle as string | undefined)
+			: undefined
+	);
 	const isProfileActive = $derived(Boolean(profileHandle));
+
+	let sidebarPictureUrl = $state<string | undefined>(undefined);
+
+	$effect(() => {
+		const h = sidebarHandle;
+		const fromData = (page.data as { result?: { profile?: { profilePicture?: string } } })?.result
+			?.profile?.profilePicture;
+
+		if (!h) {
+			sidebarPictureUrl = undefined;
+			return;
+		}
+
+		if (fromData?.trim()) {
+			sidebarPictureUrl = fromData.trim();
+			return;
+		}
+
+		let cancelled = false;
+
+		const apply = (json: { profile?: { profilePicture?: string } } | null) => {
+			const p = json?.profile?.profilePicture?.trim();
+			if (p) sidebarPictureUrl = p;
+		};
+
+		fetch(`/api/status/${encodeURIComponent(h)}`)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((json) => {
+				if (cancelled) return;
+				apply(json);
+			})
+			.catch(() => {});
+
+		if (!path.startsWith('/loading/')) {
+			return () => {
+				cancelled = true;
+			};
+		}
+
+		const interval = setInterval(() => {
+			fetch(`/api/status/${encodeURIComponent(h)}`)
+				.then((r) => (r.ok ? r.json() : null))
+				.then((json) => {
+					if (cancelled) return;
+					apply(json);
+				})
+				.catch(() => {});
+		}, 2000);
+
+		return () => {
+			cancelled = true;
+			clearInterval(interval);
+		};
+	});
 </script>
 
 <aside
@@ -20,7 +81,6 @@
 		aria-label="X wrapped home"
 	>
 		<span class="flex flex-col items-center gap-0.5 xl:hidden">
-			<span class="text-[11px] font-bold leading-none text-[#e7e9ea]">X</span>
 			<span class="flex h-7 w-7 items-center justify-center" aria-hidden="true">
 				<svg viewBox="0 0 24 24" class="h-6 w-6 fill-[#e7e9ea]">
 					<path
@@ -31,7 +91,6 @@
 			<span class="text-[11px] font-bold leading-none text-[#e7e9ea]">wrapped</span>
 		</span>
 		<span class="hidden items-center gap-1.5 xl:flex">
-			<span class="text-[15px] font-bold tracking-tight text-[#e7e9ea]">X</span>
 			<span class="flex h-7 w-7 shrink-0 items-center justify-center" aria-hidden="true">
 				<svg viewBox="0 0 24 24" class="h-6 w-6 fill-[#e7e9ea]">
 					<path
@@ -297,17 +356,20 @@
 		class="mb-3 flex w-full max-w-full items-center gap-3 rounded-full p-3 text-left transition-colors hover:bg-white/[0.08] xl:pr-2"
 		aria-label="Account menu"
 	>
-		<span
-			class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#536471] text-[15px] font-bold text-white"
-		>
-			{profileHandle ? profileHandle.slice(0, 2).toUpperCase() : 'XW'}
-		</span>
+		<ProfileAvatar
+			pictureUrl={sidebarPictureUrl}
+			handle={sidebarHandle ?? 'xwrapped'}
+			sizeClass="h-10 w-10"
+			textClass="text-[15px]"
+			fallbackLabel={sidebarHandle ? sidebarHandle.slice(0, 2).toUpperCase() : 'XW'}
+			fallbackBgClass="bg-[#536471]"
+		/>
 		<span class="hidden min-w-0 flex-1 xl:block">
 			<span class="block truncate text-[15px] font-bold text-[#e7e9ea]">
-				{profileHandle ? profileHandle : 'X Wrapped'}
+				{sidebarHandle ? sidebarHandle : 'X Wrapped'}
 			</span>
 			<span class="block truncate text-[15px] text-[#71767b]">
-				@{profileHandle ? profileHandle : 'xwrapped'}
+				@{sidebarHandle ? sidebarHandle : 'xwrapped'}
 			</span>
 		</span>
 		<svg

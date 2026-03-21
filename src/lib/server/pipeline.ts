@@ -20,7 +20,7 @@ async function processHandle(id: string, handle: string): Promise<void> {
       log('scraping profile + tweets (Apify)…');
       [profile, tweets] = await Promise.all([scrapeProfile(handle), scrapeTweets(handle)]);
     } else {
-      log('Apify disabled — using stub profile + tweets (set USE_APIFY=true to enable live scraping)');
+      log('Apify disabled — using stub profile + tweets');
       profile = stubProfile(handle);
       tweets = stubTweets(handle);
     }
@@ -57,7 +57,7 @@ async function processHandle(id: string, handle: string): Promise<void> {
     });
 
     log('generating video (Magic Hour)…');
-    const videoResult = await generateVideo(analysis, handle);
+    const videoResult = await generateVideo(analysis, handle, profile.profilePicture);
     log('video job created', { projectId: videoResult.id });
     const videoUrl = await waitForVideo(videoResult.id);
     log('video ready', { urlLength: videoUrl.length });

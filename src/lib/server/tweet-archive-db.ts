@@ -20,3 +20,16 @@ export async function getTweetArchiveById(id: string): Promise<TweetArchiveDocum
 	const { _id, ...rest } = doc;
 	return { ...rest, _id };
 }
+
+/** Latest import for a handle (e.g. `steipete` from `steipete:steipete_tweets_2025.txt`). */
+export async function getTweetArchiveForHandle(handle: string): Promise<TweetArchiveDocument | undefined> {
+	const db = await getDb();
+	const h = handle.toLowerCase().trim();
+	const doc = await db.collection<TweetArchiveMongoDoc>(COLLECTION).findOne(
+		{ handle: h },
+		{ sort: { importedAt: -1 } }
+	);
+	if (!doc) return undefined;
+	const { _id, ...rest } = doc;
+	return { ...rest, _id };
+}

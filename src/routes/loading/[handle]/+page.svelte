@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import ProfileAvatar from '$lib/components/ProfileAvatar.svelte';
 	import type { PageData } from './$types';
-	import type { PersonalityAnalysis } from '$lib/server/types';
+	import type { PersonalityAnalysis, ProfileData } from '$lib/server/types';
 
 	let { data } = $props<{ data: PageData }>();
 	let status = $state('scraping');
 	let analysis = $state<PersonalityAnalysis | null>(null);
+	let profile = $state<ProfileData | null>(null);
 	let jobError = $state<string | null>(null);
 
 	$effect(() => {
@@ -16,6 +18,7 @@
 				let json: {
 					status?: string;
 					analysis?: PersonalityAnalysis;
+					profile?: ProfileData;
 					error?: string;
 				} = {};
 				try {
@@ -36,6 +39,7 @@
 
 				status = json.status ?? status;
 				if (json.analysis) analysis = json.analysis;
+				if (json.profile) profile = json.profile;
 				if (json.status === 'complete') {
 					clearInterval(interval);
 					goto(`/profile/${encodeURIComponent(data.handle)}`);
@@ -73,11 +77,26 @@
 		<div class="flex flex-col items-center gap-6 text-center">
 
 			{#if status === 'scraping'}
-				<div class="text-6xl animate-bounce">𝕏</div>
+				<div class="animate-bounce">
+					<ProfileAvatar
+						pictureUrl={profile?.profilePicture}
+						handle={data.handle}
+						sizeClass="h-24 w-24"
+						textClass="text-5xl"
+					/>
+				</div>
 				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
 
 			{:else if status === 'analysing'}
-				<div class="text-6xl animate-pulse">🧠</div>
+				<div class="flex flex-col items-center gap-3">
+					<ProfileAvatar
+						pictureUrl={profile?.profilePicture}
+						handle={data.handle}
+						sizeClass="h-24 w-24"
+						textClass="text-5xl"
+					/>
+					<div class="text-4xl animate-pulse">🧠</div>
+				</div>
 				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
 
 			{:else if status === 'generating' && analysis}
@@ -92,7 +111,12 @@
 				<div class="w-full rounded-2xl border border-[#2f3336] bg-[#16181c] p-5 text-left">
 					<!-- Author row -->
 					<div class="mb-4 flex items-center gap-3">
-						<div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#1d9bf0] text-lg font-bold text-white">𝕏</div>
+						<ProfileAvatar
+							pictureUrl={profile?.profilePicture}
+							handle={data.handle}
+							sizeClass="h-10 w-10"
+							textClass="text-lg"
+						/>
 						<div>
 							<p class="font-bold text-[#e7e9ea]">{analysis.archetype}</p>
 							<p class="text-sm text-[#71767b]">@{data.handle}</p>

@@ -19,7 +19,7 @@
 </script>
 
 <aside
-	class="sticky top-0 hidden h-screen w-[350px] shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain py-2 pl-4 pr-6 xl:flex"
+	class="sticky top-0 hidden h-screen w-[350px] shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain py-2 pl-4 pr-6 sm:flex"
 	aria-label="Search and trends"
 >
 	<!-- Search -->

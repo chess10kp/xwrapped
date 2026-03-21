@@ -1,15 +1,22 @@
 import type { ProfileData, TweetData } from './types';
 
-/** Placeholder profile + tweets when Apify is disabled (`USE_APIFY` not true). */
+const STUB_PFP: Record<string, string> = {
+  steipete: '/images/steipete_pfp.png',
+  billgates: '/images/billgates_pfp.jpg'
+};
+
 export function stubProfile(handle: string): ProfileData {
+  const h = handle.toLowerCase();
+  const displayName =
+    h.length > 0 ? handle.charAt(0).toUpperCase() + handle.slice(1) : handle;
   return {
     username: handle,
-    name: `${handle} (stub)`,
-    bio: 'Stub profile — set USE_APIFY=true in .env to scrape live data from X.',
+    name: displayName,
+    bio: '',
     followers: 12_400,
     following: 890,
     tweetsCount: 3200,
-    profilePicture: '',
+    profilePicture: STUB_PFP[h] ?? '',
     isBlueVerified: false,
     joinedAt: '2019-03-15T12:00:00.000Z'
   };
