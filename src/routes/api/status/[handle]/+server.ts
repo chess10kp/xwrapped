@@ -11,7 +11,6 @@ export async function GET({ params }) {
   return json({
     status: result.status,
     analysis: result.analysis,
-    videoUrl: result.videoUrl,
     handle: result.handle,
     profile: result.profile,
     error: result.error,

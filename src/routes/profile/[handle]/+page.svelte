@@ -1,31 +1,17 @@
 <script lang="ts">
 	import ProfileAvatar from '$lib/components/ProfileAvatar.svelte';
+	import ProfileWrappedRail from '$lib/components/ProfileWrappedRail.svelte';
 	import {
 		aggregateTweetStats,
 		formatCount,
 		matchTweetForBestText,
 		normTweetText
 	} from '$lib/tweet-stats';
-	import { computeTweetInsights } from '$lib/tweet-insights';
-	import { computeSentimentSummary } from '$lib/tweet-sentiment';
 	import type { PageData } from './$types';
 
 	let { data } = $props<{ data: PageData }>();
 
 	const tweetAgg = $derived(aggregateTweetStats(data.result.tweets));
-	const insights = $derived(
-		computeTweetInsights(data.result.tweets, {
-			kinds: data.tweetKinds ?? undefined
-		})
-	);
-	const sentiment = $derived(
-		computeSentimentSummary(data.result.tweets, {
-			kinds: data.tweetKinds ?? undefined
-		})
-	);
-	const maxHourBucket = $derived(
-		insights ? Math.max(1, ...insights.hourBucketsUtc) : 1
-	);
 	const matchedBestTweet = $derived(
 		matchTweetForBestText(data.result.tweets, data.result.analysis?.best_tweet)
 	);
@@ -61,17 +47,6 @@
 		);
 	}
 
-	async function downloadVideo() {
-		if (!data.result.videoUrl) return;
-
-		const res = await fetch(data.result.videoUrl);
-		const blob = await res.blob();
-		const a = document.createElement('a');
-		a.href = URL.createObjectURL(blob);
-		a.download = `xwrapped-${data.result.handle}.mp4`;
-		a.click();
-	}
-
 	function profileJoined(d: string | undefined): string {
 		if (!d) return '';
 		const date = new Date(d);
@@ -87,29 +62,14 @@
 		return `Archetype: ${arch}${tone}. ${snippet}`.trim();
 	});
 
-	function hourUtcLabel(h: number): string {
-		return `${String(h).padStart(2, '0')}:00 UTC`;
-	}
-
-	function clipTweetSnippet(s: string, max = 200): string {
-		const t = s.trim();
-		if (t.length <= max) return t;
-		return `${t.slice(0, max)}…`;
-	}
-
-	function formatCompound(c: number): string {
-		const sign = c > 0 ? '+' : '';
-		return `${sign}${c.toFixed(2)}`;
-	}
 </script>
 
 <svelte:head>
 	<title>@{data.result.handle}'s X Wrapped</title>
 	<meta property="og:title" content="@{data.result.handle}'s X Wrapped" />
 	<meta property="og:description" content={ogDescription} />
-	<meta property="og:type" content="video.other" />
-	<meta property="og:video" content={data.result.videoUrl || ''} />
-	<meta name="twitter:card" content="player" />
+	<meta property="og:type" content="website" />
+	<meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
 <div class="min-h-screen pb-28">
@@ -169,231 +129,44 @@
 				<div
 					class="mt-4 rounded-lg border border-[#1d9bf0]/25 bg-[#1d9bf0]/5 px-3 py-2.5 text-[13px] leading-snug text-[#e7e9ea]"
 				>
-					<span class="font-semibold text-[#1d9bf0]">Imported archive</span>
-					Engagement, hashtags, and mentions below use
-					<span class="tabular-nums font-medium">{data.archiveMeta.tweetCount}</span>
-					posts from
-					<span class="font-mono text-[12px] text-[#71767b]">{data.archiveMeta.sourceFile}</span>. The written summary
-					and video used the scrape from when this wrap was generated.
+					{#if data.archiveMeta.source === 'repo'}
+						<span class="font-semibold text-[#1d9bf0]">Repo export</span>
+						Engagement and patterns (sidebar on desktop, below on mobile) use
+						<span class="tabular-nums font-medium">{data.archiveMeta.tweetCount}</span>
+						posts from
+						<span class="font-mono text-[12px] text-[#71767b]">{data.archiveMeta.sourceFile}</span>
+						in the project. The summary used the posts stored when this wrap was generated.
+					{:else}
+						<span class="font-semibold text-[#1d9bf0]">Imported archive</span>
+						Engagement and patterns use
+						<span class="tabular-nums font-medium">{data.archiveMeta.tweetCount}</span>
+						posts from MongoDB
+						<span class="font-mono text-[12px] text-[#71767b]">{data.archiveMeta.sourceFile}</span>. The summary used the posts stored when this wrap was generated.
+					{/if}
 				</div>
 			{/if}
 		</div>
 
-		<!-- Video -->
-		{#if data.result.videoUrl}
-			<div class="border-b border-[#2f3336] p-4">
-				<div class="overflow-hidden rounded-2xl border border-[#2f3336]">
-					<video src={data.result.videoUrl} controls autoplay class="aspect-video w-full object-cover">
-						<track kind="captions" />
-					</video>
-				</div>
-			</div>
-		{/if}
-
-		<!-- Engagement from sample -->
 		{#if tweetAgg.count > 0}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">
-					Engagement{data.archiveMeta ? ' (your archive)' : ' (this sample)'}
-				</p>
-				<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(tweetAgg.totalLikes)}</p>
-						<p class="text-xs text-[#71767b]">Total likes</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(tweetAgg.totalViews)}</p>
-						<p class="text-xs text-[#71767b]">Total views</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(tweetAgg.avgLikes)}</p>
-						<p class="text-xs text-[#71767b]">Avg likes / post</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(tweetAgg.avgViews)}</p>
-						<p class="text-xs text-[#71767b]">Avg views / post</p>
-					</div>
-				</div>
+			<div class="border-b border-[#2f3336] py-4 sm:hidden">
+				<ProfileWrappedRail
+					result={data.result}
+					archiveMeta={data.archiveMeta}
+					tweetKinds={data.tweetKinds}
+					padded={true}
+				/>
 			</div>
-			{#if sentiment}
-				<div class="border-b border-[#2f3336] px-4 py-5">
-					<p class="mb-1 text-xs font-medium uppercase tracking-wider text-[#71767b]">Sentiment (NLP)</p>
-					<p class="mb-3 text-[12px] leading-snug text-[#71767b]">
-						VADER scores (English-oriented). Positive / neutral / negative use the usual ±0.05 compound cutoffs.
-						{#if sentiment.excludeReposts && sentiment.skippedReposts > 0}
-							<span class="text-[#536471]">
-								· {sentiment.skippedReposts} repost{sentiment.skippedReposts === 1 ? '' : 's'} excluded.
-							</span>
-						{/if}
-					</p>
-					<div class="mb-4 flex h-3 w-full max-w-md overflow-hidden rounded-full bg-[#2f3336]" role="img" aria-label="Share of positive, neutral, and negative posts by VADER compound score">
-						{#if sentiment.positivePercent > 0}
-							<div
-								class="min-h-[2px] bg-[#00ba7c]"
-								style="width: {sentiment.positivePercent}%"
-								title="Positive {sentiment.positivePercent}%"
-							></div>
-						{/if}
-						{#if sentiment.neutralPercent > 0}
-							<div
-								class="min-h-[2px] bg-[#536471]"
-								style="width: {sentiment.neutralPercent}%"
-								title="Neutral {sentiment.neutralPercent}%"
-							></div>
-						{/if}
-						{#if sentiment.negativePercent > 0}
-							<div
-								class="min-h-[2px] bg-[#f4212e]"
-								style="width: {sentiment.negativePercent}%"
-								title="Negative {sentiment.negativePercent}%"
-							></div>
-						{/if}
-					</div>
-					<div class="mb-4 grid grid-cols-3 gap-2 sm:max-w-md">
-						<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2.5">
-							<p class="text-lg font-bold tabular-nums text-[#00ba7c]">{sentiment.positivePercent}%</p>
-							<p class="text-xs text-[#71767b]">Positive</p>
-						</div>
-						<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2.5">
-							<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{sentiment.neutralPercent}%</p>
-							<p class="text-xs text-[#71767b]">Neutral</p>
-						</div>
-						<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2.5">
-							<p class="text-lg font-bold tabular-nums text-[#f4212e]">{sentiment.negativePercent}%</p>
-							<p class="text-xs text-[#71767b]">Negative</p>
-						</div>
-					</div>
-					<p class="mb-4 text-[15px] text-[#e7e9ea]">
-						<span class="text-[#71767b]">Mean compound:</span>
-						<span class="ml-1 font-mono font-semibold tabular-nums">{formatCompound(sentiment.meanCompound)}</span>
-						<span class="text-[#71767b]"> · {sentiment.scoredCount} posts scored</span>
-					</p>
-					<div class="grid gap-3 sm:grid-cols-2">
-						{#if sentiment.mostPositive}
-							<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-								<p class="text-xs font-medium text-[#00ba7c]">Sweetest · {formatCompound(sentiment.mostPositive.compound)}</p>
-								<p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-snug text-[#e7e9ea]">
-									{clipTweetSnippet(sentiment.mostPositive.tweet.text)}
-								</p>
-							</div>
-						{/if}
-						{#if sentiment.mostNegative}
-							<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-								<p class="text-xs font-medium text-[#f4212e]">Saltiest · {formatCompound(sentiment.mostNegative.compound)}</p>
-								<p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[14px] leading-snug text-[#e7e9ea]">
-									{clipTweetSnippet(sentiment.mostNegative.tweet.text)}
-								</p>
-							</div>
-						{/if}
-					</div>
-				</div>
-			{/if}
 		{:else}
 			<div class="border-b border-[#2f3336] px-4 py-5">
 				<p class="mb-1 text-xs font-medium uppercase tracking-wider text-[#71767b]">Post data</p>
 				<p class="text-[15px] leading-relaxed text-[#71767b]">
-					No posts were loaded for this wrap, so totals and hashtag/mention breakdowns are empty. Generate again with
-					live scraping enabled, or import a tweet export into MongoDB
+					No posts were loaded for this wrap, so totals and hashtag/mention breakdowns are empty. Add
+					<code class="rounded bg-[#16181c] px-1 font-mono text-[12px] text-[#e7e9ea]">{data.result.handle}_tweets_*.txt</code>
+					at the project root, or import an export into MongoDB
 					<code class="rounded bg-[#16181c] px-1 font-mono text-[12px] text-[#e7e9ea]">tweet_archives</code>
-					for this handle (see project import script).
+					(<code class="rounded bg-[#16181c] px-1 font-mono text-[12px] text-[#e7e9ea]">npm run import-tweets</code>),
+					then generate again.
 				</p>
-			</div>
-		{/if}
-
-		{#if insights}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Patterns</p>
-
-				<div class="mb-5 rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-					<p class="text-xs text-[#71767b]">Original vs repost</p>
-					<p class="mt-1 text-[15px] text-[#e7e9ea]">
-						<span class="font-semibold tabular-nums">{insights.originalPercent}%</span>
-						original ·
-						<span class="font-semibold tabular-nums">{insights.repostPercent}%</span>
-						reposts
-						<span class="text-[#71767b]">({insights.count} posts)</span>
-					</p>
-					<p class="mt-1 text-[12px] text-[#71767b]">
-						{#if insights.kindSource === 'archive'}
-							From your export labels.
-						{:else}
-							Heuristic (lines starting with <code class="font-mono text-[11px]">RT @</code>); import an archive for exact repost counts.
-						{/if}
-					</p>
-				</div>
-
-				<div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(insights.medianLikes)}</p>
-						<p class="text-xs text-[#71767b]">Median likes</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(insights.p95Likes)}</p>
-						<p class="text-xs text-[#71767b]">P95 likes</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(insights.medianViews)}</p>
-						<p class="text-xs text-[#71767b]">Median views</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(insights.p95Views)}</p>
-						<p class="text-xs text-[#71767b]">P95 views</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(insights.medianChars)}</p>
-						<p class="text-xs text-[#71767b]">Median chars</p>
-					</div>
-					<div class="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-3">
-						<p class="text-lg font-bold tabular-nums text-[#e7e9ea]">{formatCount(insights.p95Chars)}</p>
-						<p class="text-xs text-[#71767b]">P95 chars</p>
-					</div>
-				</div>
-
-				<div class="mb-5">
-					<p class="mb-2 text-xs text-[#71767b]">
-						Posts by hour <span class="text-[#536471]">(UTC)</span> · busiest
-						<span class="font-medium text-[#e7e9ea]">{hourUtcLabel(insights.peakHourUtc)}</span>
-					</p>
-					<div
-						class="flex h-14 items-end gap-px overflow-x-auto rounded-lg border border-[#2f3336] bg-black px-1 pb-1 pt-2"
-						role="img"
-						aria-label="Histogram of post counts by hour UTC"
-					>
-						{#each insights.hourBucketsUtc as count, h}
-							<div
-								class="group flex min-w-[8px] flex-1 flex-col justify-end"
-								title="{hourUtcLabel(h)}: {count} posts"
-							>
-								<div
-									class="w-full min-h-[2px] rounded-sm bg-[#1d9bf0]/90 transition-colors group-hover:bg-[#1d9bf0]"
-									style="height: {Math.max(2, (count / maxHourBucket) * 100)}%"
-								></div>
-							</div>
-						{/each}
-					</div>
-					<p class="mt-1 font-mono text-[10px] text-[#536471]">
-						00–23h · max bar = highest bucket
-					</p>
-				</div>
-
-				{#if insights.topDomains.length > 0}
-					<div>
-						<p class="mb-2 text-xs text-[#71767b]">Top external link domains</p>
-						<div class="flex flex-wrap gap-2">
-							{#each insights.topDomains as { domain, count }}
-								<span
-									class="rounded-full border border-[#2f3336] bg-[#16181c] px-2.5 py-1 text-xs text-[#e7e9ea]"
-								>
-									{domain}
-									<span class="text-[#71767b]">×{count}</span>
-								</span>
-							{/each}
-						</div>
-						<p class="mt-2 text-[11px] leading-snug text-[#536471]">
-							x.com / t.co / Twitter CDNs excluded.
-						</p>
-					</div>
-				{/if}
 			</div>
 		{/if}
 
@@ -446,37 +219,9 @@
 			</div>
 		</div>
 
-		{#if tweetAgg.topHashtags.length > 0 || tweetAgg.topMentions.length > 0}
-			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">From your sample</p>
-				{#if tweetAgg.topHashtags.length > 0}
-					<p class="mb-1.5 text-xs text-[#71767b]">Hashtags</p>
-					<div class="mb-4 flex flex-wrap gap-2">
-						{#each tweetAgg.topHashtags as { tag, count }}
-							<span
-								class="rounded-full border border-[#2f3336] bg-[#16181c] px-2.5 py-1 text-xs text-[#e7e9ea]"
-								>#{tag} <span class="text-[#71767b]">×{count}</span></span
-							>
-						{/each}
-					</div>
-				{/if}
-				{#if tweetAgg.topMentions.length > 0}
-					<p class="mb-1.5 text-xs text-[#71767b]">Mentions</p>
-					<div class="flex flex-wrap gap-2">
-						{#each tweetAgg.topMentions as { handle, count }}
-							<span
-								class="rounded-full border border-[#2f3336] bg-[#16181c] px-2.5 py-1 text-xs text-[#e7e9ea]"
-								>@{handle} <span class="text-[#71767b]">×{count}</span></span
-							>
-						{/each}
-					</div>
-				{/if}
-			</div>
-		{/if}
-
 		{#if showSeparateBiggestHit && tweetAgg.biggestHit}
 			<div class="border-b border-[#2f3336] px-4 py-5">
-				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Most liked in sample</p>
+				<p class="mb-3 text-xs font-medium uppercase tracking-wider text-[#71767b]">Most liked post</p>
 				<div class="rounded-xl border border-[#2f3336] bg-[#16181c] p-3">
 					<p class="text-[13px] font-semibold text-[#1d9bf0]">{formatCount(tweetAgg.biggestHit.likeCount)} likes</p>
 					<p class="mt-1 line-clamp-4 whitespace-pre-wrap break-words text-[15px] leading-snug text-[#e7e9ea]">
@@ -699,17 +444,6 @@
 				<span>🔗</span>
 				Share on X
 			</button>
-
-			{#if data.result.videoUrl}
-				<button
-					type="button"
-					onclick={downloadVideo}
-					class="flex items-center gap-2 rounded-full border border-[#536471] px-6 py-2.5 font-bold text-[#e7e9ea] transition-colors hover:bg-[#181919]"
-				>
-					<span>⬇</span>
-					Download
-				</button>
-			{/if}
 		</div>
 	</div>
 </div>

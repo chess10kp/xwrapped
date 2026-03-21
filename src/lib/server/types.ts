@@ -36,6 +36,15 @@ export interface PersonalityAnalysis {
 
 export type WrappedStatus = 'scraping' | 'analysing' | 'generating' | 'complete' | 'error';
 
+/** Where the expanded tweet list on the profile page comes from (repo file vs Mongo `tweet_archives`). */
+export type TweetDatasetSource = 'repo' | 'mongo';
+
+export interface ArchiveDisplayMeta {
+	tweetCount: number;
+	sourceFile: string;
+	source: TweetDatasetSource;
+}
+
 export interface WrappedResult {
   id: string;
   handle: string;

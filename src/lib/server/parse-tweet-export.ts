@@ -1,6 +1,6 @@
 import type { ArchivedTweet, TweetExportFooter } from './tweet-archive';
 
-function parseStatNumber(s: string): number {
+export function parseStatNumber(s: string): number {
 	const t = s.replace(/,/g, '').trim();
 	const m = /^([\d.]+)([KMB])?$/i.exec(t);
 	if (!m) return Math.round(parseFloat(t)) || 0;

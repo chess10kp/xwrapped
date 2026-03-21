@@ -67,6 +67,19 @@ function pct(part: number, total: number): number {
 	return Math.round((part / total) * 1000) / 10;
 }
 
+/**
+ * Plain-language label for mean compound score in [-1, 1] (same polarity bands as classifyCompound).
+ */
+export function describeMeanCompound(compound: number): string {
+	if (compound >= 0.5) return 'Strongly upbeat on average';
+	if (compound >= 0.15) return 'Leans positive on average';
+	if (compound >= 0.05) return 'Mildly positive on average';
+	if (compound > -0.05) return 'Roughly neutral on average';
+	if (compound > -0.15) return 'Mildly negative on average';
+	if (compound > -0.5) return 'Leans negative on average';
+	return 'Strongly downbeat on average';
+}
+
 export function computeSentimentSummary(
 	tweets: TweetData[] | undefined,
 	options?: ComputeSentimentOptions

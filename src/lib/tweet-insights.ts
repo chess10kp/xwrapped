@@ -59,6 +59,21 @@ function guessRepost(text: string): boolean {
 	return false;
 }
 
+/** Parse tweet timestamps from ISO, Apify, or English export lines like "February 15, 2025". */
+function parseTweetDate(raw: unknown): Date | null {
+	if (raw == null) return null;
+	if (raw instanceof Date) return Number.isNaN(raw.getTime()) ? null : raw;
+	const s = typeof raw === 'string' ? raw.trim() : String(raw);
+	if (!s) return null;
+	let d = new Date(s);
+	if (!Number.isNaN(d.getTime())) return d;
+	// Strip trailing parentheticals e.g. "(Pinned Tweet)"
+	const cleaned = s.replace(/\s*\([^)]*\)\s*$/g, '').trim();
+	d = new Date(cleaned);
+	if (!Number.isNaN(d.getTime())) return d;
+	return null;
+}
+
 export interface TweetInsights {
 	count: number;
 	/** Posts per hour of day, 0–23 UTC */
@@ -112,8 +127,8 @@ export function computeTweetInsights(
 
 	const hourBucketsUtc = new Array(24).fill(0);
 	for (const t of list) {
-		const d = new Date(t.createdAt);
-		if (!Number.isNaN(d.getTime())) {
+		const d = parseTweetDate((t as { createdAt?: unknown }).createdAt);
+		if (d) {
 			const h = d.getUTCHours();
 			hourBucketsUtc[h]++;
 		}
