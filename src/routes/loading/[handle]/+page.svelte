@@ -10,13 +10,13 @@
 	$effect(() => {
 		const interval = setInterval(async () => {
 			try {
-				const res = await fetch(`/api/status/${data.uuid}`);
+				const res = await fetch(`/api/status/${encodeURIComponent(data.handle)}`);
 				const json = await res.json();
 				status = json.status;
 				if (json.analysis) analysis = json.analysis;
 				if (json.status === 'complete') {
 					clearInterval(interval);
-					goto(`/wrapped/${data.uuid}`);
+					goto(`/profile/${encodeURIComponent(data.handle)}`);
 				}
 			} catch (err) {
 				console.error('Polling error:', err);

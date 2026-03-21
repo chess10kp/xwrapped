@@ -2,10 +2,11 @@ import { store } from '$lib/server/db';
 import { redirect } from '@sveltejs/kit';
 
 export async function load({ params }) {
-	const result = await store.get(params.uuid);
-	
+	const handle = params.handle.toLowerCase();
+	const result = await store.get(handle);
+
 	if (!result || result.status !== 'complete') {
-		redirect(307, `/loading/${params.uuid}`);
+		redirect(307, `/loading/${handle}`);
 	}
 	
 	return { result };

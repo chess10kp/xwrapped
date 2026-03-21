@@ -27,7 +27,7 @@
 				throw new Error(data.error || 'Failed to generate wrapped');
 			}
 
-			window.location.href = `/loading/${data.id}`;
+			window.location.href = `/loading/${encodeURIComponent(data.id)}`;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Something went wrong';
 		} finally {

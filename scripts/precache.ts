@@ -23,15 +23,14 @@ const DEMO_HANDLES = [
 async function preCache() {
 	for (const handle of DEMO_HANDLES) {
 		console.log(`Pre-caching @${handle}...`);
-		const id = crypto.randomUUID();
-		await store.set(id, {
-			id,
+		await store.set(handle, {
+			id: handle,
 			handle,
 			status: 'scraping',
 			createdAt: new Date(),
 		});
-		await processHandle(id, handle);
-		console.log(`✅ @${handle} cached with ID: ${id}`);
+		await processHandle(handle, handle);
+		console.log(`✅ @${handle} cached at /profile/${handle}`);
 	}
 	console.log('🎉 Pre-cache complete!');
 }

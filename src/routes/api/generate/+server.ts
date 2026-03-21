@@ -9,16 +9,16 @@ export async function POST({ request }) {
     return json({ error: 'Handle is required' }, { status: 400 });
   }
 
-  const cleanedHandle = handle.trim().replace(/^@/, '');
-  
+  const cleanedHandle = handle.trim().replace(/^@/, '').toLowerCase();
+
   if (!/^[a-zA-Z0-9_]{1,15}$/.test(cleanedHandle)) {
     return json({ error: 'Invalid handle format' }, { status: 400 });
   }
 
-  const id = crypto.randomUUID();
-  
-  await store.set(id, { 
-    id, 
+  const id = cleanedHandle;
+
+  await store.set(id, {
+    id,
     handle: cleanedHandle, 
     status: 'scraping', 
     createdAt: new Date() 
