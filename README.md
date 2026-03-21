@@ -11,6 +11,7 @@ Generate personalized X (Twitter) personality wrapped experiences with AI-powere
 - **Apify** - Twitter scraping
 - **Anthropic Claude** - AI personality analysis
 - **MagicHour** - Video generation
+- **MongoDB** - Persistent storage for wrapped jobs
 
 ## Features
 
@@ -44,6 +45,7 @@ Edit `.env` with your values:
 APIFY_API_TOKEN=your_apify_token
 ANTHROPIC_API_KEY=your_anthropic_key
 MAGIC_HOUR_API_KEY=your_magichour_key
+MONGODB_URI=your_mongodb_connection_string
 DEMO_MODE=
 PUBLIC_BASE_URL=http://localhost:5173
 ```
@@ -53,6 +55,7 @@ PUBLIC_BASE_URL=http://localhost:5173
 - **Apify**: [console.apify.com/settings/integrations](https://console.apify.com/settings/integrations)
 - **Anthropic**: [console.anthropic.com/](https://console.anthropic.com/)
 - **MagicHour**: [magichour.ai/developer?tab=api-keys](https://magichour.ai/developer?tab=api-keys)
+- **MongoDB**: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (create a cluster, Database Access user, Network Access allow your IP, then copy the connection string and set the database name to `xwrapped` in the URI path if needed)
 
 ## Development
 
@@ -82,7 +85,7 @@ For demos or testing, pre-generate wrapped profiles for popular accounts:
 npm run precache
 ```
 
-This will generate wrapped profiles for `elonmusk`, `sama`, `naval`, and others, saving them to `data/`.
+This will generate wrapped profiles for `elonmusk`, `sama`, `naval`, and others, storing results in MongoDB (`MONGODB_URI` must be set).
 
 ## Project Structure
 
@@ -94,7 +97,8 @@ xwrapped/
 │   │   │   ├── scraper.ts       # Apify Twitter scraping
 │   │   │   ├── analyser.ts      # Claude personality analysis
 │   │   │   ├── magichour.ts     # MagicHour video generation
-│   │   │   ├── store.ts         # In-memory + JSON store
+│   │   │   ├── db.ts            # MongoDB-backed store
+│   │   │   ├── mongo-connection.ts  # MongoDB client
 │   │   │   ├── pipeline.ts      # Orchestrates full pipeline
 │   │   │   └── types.ts         # TypeScript types
 │   │   └── components/          # UI components
@@ -108,8 +112,7 @@ xwrapped/
 │   │   └── wrapped/[uuid]/              # Results page
 │   └── app.css                   # Tailwind + X dark theme
 ├── scripts/
-│   └── precache.ts               # Pre-cache demo handles
-├── data/                         # JSON result storage
+│   └── precache.ts               # Pre-cache demo handles (requires MongoDB)
 └── .env.example                  # Environment variables template
 ```
 
