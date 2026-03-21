@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "exa-js": "^1.10.2",
+    "jsonrepair": "^3.13.3",
     "magic-hour": "^0.55.0",
     "mongodb": "^7.1.0"
   }
