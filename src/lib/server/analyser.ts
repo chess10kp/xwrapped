@@ -15,6 +15,46 @@ function getOpenRouterKey(): string {
   return apiKey;
 }
 
+/**
+ * OpenRouter follows OpenAI Chat Completions: `message.content` may be a string
+ * or an array of parts like `{ type: 'text', text: '...' }`. Some models omit
+ * or null out `content` when using other fields.
+ */
+function extractAssistantMessageText(message: unknown): string | undefined {
+  if (!message || typeof message !== 'object') return undefined;
+  const m = message as Record<string, unknown>;
+
+  const fromParts = (parts: unknown): string | undefined => {
+    if (!Array.isArray(parts)) return undefined;
+    const out: string[] = [];
+    for (const part of parts) {
+      if (typeof part === 'string') {
+        out.push(part);
+        continue;
+      }
+      if (part && typeof part === 'object') {
+        const p = part as Record<string, unknown>;
+        if (typeof p.text === 'string') out.push(p.text);
+        else if (typeof p.content === 'string') out.push(p.content);
+      }
+    }
+    const joined = out.join('');
+    return joined.length > 0 ? joined : undefined;
+  };
+
+  const content = m.content;
+  if (typeof content === 'string') {
+    const t = content.trim();
+    return t.length > 0 ? content : undefined;
+  }
+  if (Array.isArray(content)) {
+    const t = fromParts(content);
+    if (t) return t;
+  }
+
+  return undefined;
+}
+
 function parsePersonalityJson(text: string): PersonalityAnalysis {
   const trimmed = text.trim();
   try {
@@ -28,10 +68,19 @@ function parsePersonalityJson(text: string): PersonalityAnalysis {
   }
 }
 
-function buildPrompt(profile: ProfileData, tweets: TweetData[]): string {
+function buildPrompt(profile: ProfileData, tweets: TweetData[], webSearchContext?: string): string {
   const tweetTexts = tweets
     .map((t, i) => `[${i+1}] "${t.text}" (${t.likeCount} likes, ${new Date(t.createdAt).toLocaleDateString()})`)
     .join('\n');
+
+  const webSection =
+    webSearchContext?.trim() &&
+    `## Public web context (Exa search — third-party pages; may be incomplete or outdated)
+Use only as supporting context alongside their own tweets. Do not treat as definitive biography.
+
+${webSearchContext.trim()}
+
+`;
 
   return `You are an expert personality analyst. Analyse this X (Twitter) user's public profile and recent tweets. Return ONLY valid JSON matching this exact schema — no markdown, no explanation.
 
@@ -44,7 +93,7 @@ function buildPrompt(profile: ProfileData, tweets: TweetData[]): string {
 - Total tweets: ${profile.tweetsCount}
 - Joined: ${profile.joinedAt}
 
-## Recent Tweets (${tweets.length} total)
+${webSection ?? ''}## Recent Tweets (${tweets.length} total)
 ${tweetTexts}
 
 ## Required JSON Output Schema
@@ -64,7 +113,8 @@ ${tweetTexts}
 
 export async function analysePersonality(
   profile: ProfileData,
-  tweets: TweetData[]
+  tweets: TweetData[],
+  webSearchContext?: string
 ): Promise<PersonalityAnalysis> {
   const res = await fetch(OPENROUTER_URL, {
     method: 'POST',
@@ -76,8 +126,8 @@ export async function analysePersonality(
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 1024,
-      messages: [{ role: 'user', content: buildPrompt(profile, tweets) }]
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: buildPrompt(profile, tweets, webSearchContext) }]
     })
   });
 
@@ -94,7 +144,10 @@ export async function analysePersonality(
   }
 
   const payload = data as {
-    choices?: Array<{ message?: { content?: string | null } }>;
+    choices?: Array<{
+      message?: unknown;
+      finish_reason?: string | null;
+    }>;
     error?: { message?: string };
   };
 
@@ -102,9 +155,18 @@ export async function analysePersonality(
     throw new Error(`OpenRouter: ${payload.error.message}`);
   }
 
-  const text = payload.choices?.[0]?.message?.content;
-  if (typeof text !== 'string' || !text.trim()) {
-    throw new Error('Unexpected response shape from OpenRouter API');
+  const choice0 = payload.choices?.[0];
+  const text = extractAssistantMessageText(choice0?.message);
+  if (!text?.trim()) {
+    const fr = choice0?.finish_reason ?? 'unknown';
+    const hint =
+      fr === 'length'
+        ? ' (response was cut off — try increasing max_tokens or shortening input)'
+        : '';
+    const preview = raw.length > 800 ? `${raw.slice(0, 800)}…` : raw;
+    throw new Error(
+      `OpenRouter returned no assistant text (finish_reason=${fr})${hint}. Raw: ${preview}`
+    );
   }
 
   return parsePersonalityJson(text);

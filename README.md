@@ -8,8 +8,9 @@ Generate personalized X (Twitter) personality wrapped experiences with AI-powere
 - **Svelte 5** - UI framework with runes
 - **TypeScript** - Type safety
 - **TailwindCSS v4** - Styling
-- **Apify** - Twitter scraping
-- **Anthropic Claude** - AI personality analysis
+- **Apify** - Twitter scraping (optional; stub data when disabled)
+- **Exa** - Neural web search for public context alongside tweets (optional)
+- **OpenRouter** - AI personality analysis (`openrouter/free` model)
 - **MagicHour** - Video generation
 - **MongoDB** - Persistent storage for wrapped jobs
 
@@ -42,18 +43,26 @@ cp .env.example .env
 Edit `.env` with your values:
 
 ```env
-APIFY_API_TOKEN=your_apify_token
-ANTHROPIC_API_KEY=your_anthropic_key
-MAGIC_HOUR_API_KEY=your_magichour_key
-MONGODB_URI=your_mongodb_connection_string
+USE_APIFY=
+APIFY_API_TOKEN=
+OPENROUTER_API_KEY=
+EXA_API_KEY=
+MAGIC_HOUR_API_KEY=
+MONGODB_URI=
 DEMO_MODE=
 PUBLIC_BASE_URL=http://localhost:5173
 ```
 
+- **`OPENROUTER_API_KEY`** — Required for personality analysis. Get a key at [openrouter.ai/keys](https://openrouter.ai/keys).
+- **`MONGODB_URI`** — Required for storing jobs and results. Test with `npm run verify:mongo`.
+- **`USE_APIFY`** — Set to `true` to scrape live X data via Apify (`APIFY_API_TOKEN` required). If unset or false, the pipeline uses **stub** profile and tweet data for local development.
+- **`EXA_API_KEY`** — Optional. When set, the pipeline runs Exa web search to enrich analysis with public web context. If missing, generation still runs without that step.
+
 ### Getting API Keys
 
 - **Apify**: [console.apify.com/settings/integrations](https://console.apify.com/settings/integrations)
-- **Anthropic**: [console.anthropic.com/](https://console.anthropic.com/)
+- **OpenRouter**: [openrouter.ai/keys](https://openrouter.ai/keys)
+- **Exa**: [dashboard.exa.ai/api-keys](https://dashboard.exa.ai/api-keys)
 - **MagicHour**: [magichour.ai/developer?tab=api-keys](https://magichour.ai/developer?tab=api-keys)
 - **MongoDB**: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (create a cluster, Database Access user, Network Access allow your IP, then copy the connection string and set the database name to `xwrapped` in the URI path if needed)
 
@@ -85,7 +94,7 @@ For demos or testing, pre-generate wrapped profiles for popular accounts:
 npm run precache
 ```
 
-This will generate wrapped profiles for `elonmusk`, `sama`, `naval`, and others, storing results in MongoDB (`MONGODB_URI` must be set).
+This runs the full pipeline for `elonmusk`, `sama`, `naval`, and others, storing results in MongoDB (`MONGODB_URI` must be set). Completed profiles are available at `/profile/<handle>`.
 
 ## Project Structure
 
@@ -95,7 +104,8 @@ xwrapped/
 │   ├── lib/
 │   │   ├── server/
 │   │   │   ├── scraper.ts       # Apify Twitter scraping
-│   │   │   ├── analyser.ts      # Claude personality analysis
+│   │   │   ├── analyser.ts      # OpenRouter personality analysis
+│   │   │   ├── exa.ts           # Optional Exa web search
 │   │   │   ├── magichour.ts     # MagicHour video generation
 │   │   │   ├── db.ts            # MongoDB-backed store
 │   │   │   ├── mongo-connection.ts  # MongoDB client
@@ -105,12 +115,12 @@ xwrapped/
 │   ├── routes/
 │   │   ├── +page.svelte         # Landing page
 │   │   ├── +layout.svelte       # App layout
+│   │   ├── layout.css           # Tailwind + X dark theme
 │   │   ├── api/
-│   │   │   ├── generate/+server.ts   # Start pipeline
-│   │   │   └── status/[uuid]/+server.ts  # Poll status
-│   │   ├── loading/[uuid]/+page.svelte  # Loading UI
-│   │   └── wrapped/[uuid]/              # Results page
-│   └── app.css                   # Tailwind + X dark theme
+│   │   │   ├── generate/+server.ts       # Start pipeline
+│   │   │   └── status/[handle]/+server.ts  # Poll status
+│   │   ├── loading/[handle]/+page.svelte  # Loading UI
+│   │   └── profile/[handle]/              # Results page
 ├── scripts/
 │   └── precache.ts               # Pre-cache demo handles (requires MongoDB)
 └── .env.example                  # Environment variables template
@@ -119,10 +129,12 @@ xwrapped/
 ## How It Works
 
 1. **User enters handle** → Client validates and POSTs to `/api/generate`
-2. **Scraping phase** → Apify fetches profile + 50 recent tweets
-3. **Analysis phase** → Claude analyzes personality and generates archetype
-4. **Video generation** → MagicHour creates cinematic video from analysis
-5. **Results** → User sees video, stats, and can share/download
+2. **Scraping phase** → With `USE_APIFY=true`, Apify fetches profile + up to 50 recent tweets; otherwise stub data is used
+3. **Analysis phase** → OpenRouter analyzes personality and generates an archetype (optionally grounded with Exa when `EXA_API_KEY` is set)
+4. **Video generation** → MagicHour creates a cinematic video from the analysis
+5. **Results** → User is redirected to `/profile/<handle>` for video, stats, share, and download
+
+Jobs are keyed by **normalized handle** (lowercase, no `@`). The generate response `id` is that same handle string.
 
 ## API Endpoints
 
@@ -131,6 +143,7 @@ xwrapped/
 Starts the wrapped generation pipeline.
 
 **Request:**
+
 ```json
 {
   "handle": "elonmusk"
@@ -138,33 +151,41 @@ Starts the wrapped generation pipeline.
 ```
 
 **Response:**
+
 ```json
 {
-  "id": "uuid"
+  "id": "elonmusk"
 }
 ```
 
-### GET /api/status/[uuid]
+The `id` matches the stored job key and URL segment (normalized handle).
 
-Polls the status of a wrapped generation.
+### GET /api/status/[handle]
+
+Polls the status of a wrapped generation. Use the same handle as in the generate request (normalized).
 
 **Response:**
+
 ```json
 {
   "status": "complete",
-  "analysis": { ... },
+  "analysis": { },
   "videoUrl": "https://...",
   "handle": "elonmusk",
-  "profile": { ... }
+  "profile": { },
+  "error": null
 }
 ```
+
+When `status` is `error`, `error` contains a message string.
 
 ## Error Handling
 
 The app gracefully handles:
+
 - Invalid Twitter handles
-- Private or deleted accounts
-- Insufficient tweet data (< 5 tweets)
+- Private or deleted accounts (when using live scraping)
+- Insufficient tweet data
 - API timeouts and failures
 - Video generation errors
 

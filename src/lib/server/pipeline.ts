@@ -4,6 +4,7 @@ import { stubProfile, stubTweets } from './stub-x-data';
 import type { ProfileData, TweetData } from './types';
 import { useApify } from './use-apify';
 import { analysePersonality } from './analyser';
+import { isExaConfigured, searchWebContextForPerson } from './exa';
 import { generateVideo, waitForVideo } from './magichour';
 
 const log = (...args: unknown[]) => console.log('[pipeline]', ...args);
@@ -31,8 +32,23 @@ async function processHandle(id: string, handle: string): Promise<void> {
       tweets 
     });
 
+    let webSearchContext: string | undefined;
+    if (isExaConfigured()) {
+      log('Exa web search (public context for this person)…');
+      const ctx = await searchWebContextForPerson(profile);
+      if (ctx) {
+        webSearchContext = ctx;
+        await store.update(id, { webSearchContext: ctx });
+        log('Exa context ok', { chars: ctx.length });
+      } else {
+        log('Exa context skipped or empty');
+      }
+    } else {
+      log('Exa disabled — set EXA_API_KEY for web search alongside tweets');
+    }
+
     log('analysing personality (OpenRouter)…');
-    const analysis = await analysePersonality(profile, tweets);
+    const analysis = await analysePersonality(profile, tweets, webSearchContext);
     log('analysis ok', { archetype: analysis.archetype });
 
     await store.update(id, { 

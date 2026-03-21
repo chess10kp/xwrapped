@@ -14,5 +14,5 @@ export {
   MAGIC_HOUR_API_KEY,
   MONGODB_URI,
   OPENROUTER_API_KEY,
-  TWITTERAPI_IO_KEY
-} from '$env/static/private';
+  TWITTERAPI_IO_KEY,
+} from "$env/static/private";

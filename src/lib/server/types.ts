@@ -42,6 +42,8 @@ export interface WrappedResult {
   status: WrappedStatus;
   profile?: ProfileData;
   tweets?: TweetData[];
+  /** Optional public-web snippets from Exa (same capability as Exa web search), used to enrich analysis */
+  webSearchContext?: string;
   analysis?: PersonalityAnalysis;
   videoUrl?: string;
   error?: string;

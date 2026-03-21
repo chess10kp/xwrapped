@@ -36,7 +36,7 @@
 </svelte:head>
 
 <div class="min-h-screen pb-28">
-	<div class="mx-auto max-w-[600px] border-x border-[#2f3336]">
+	<div>
 
 		<!-- Profile header -->
 		<div class="border-b border-[#2f3336] px-4 py-6">
@@ -46,6 +46,11 @@
 					<h1 class="text-xl font-extrabold text-[#e7e9ea]">@{data.result.handle}</h1>
 					<p class="text-[#1d9bf0]">{data.result.analysis?.archetype}</p>
 					<p class="mt-1 text-sm text-[#71767b]">{data.result.analysis?.archetype_description}</p>
+					{#if data.result.webSearchContext}
+						<p class="mt-2 text-xs text-[#71767b]">
+							Includes public web context (Exa) in addition to posts from X.
+						</p>
+					{/if}
 				</div>
 			</div>
 		</div>
@@ -119,8 +124,10 @@
 	</div>
 
 	<!-- Bottom action bar -->
-	<div class="fixed bottom-0 left-0 right-0 border-t border-[#2f3336] bg-black/95 backdrop-blur-sm">
-		<div class="mx-auto flex max-w-[600px] items-center justify-center gap-3 px-4 py-3">
+	<div
+		class="fixed bottom-0 right-0 border-t border-[#2f3336] bg-black/95 backdrop-blur-sm left-[72px] xl:left-[275px]"
+	>
+		<div class="mx-auto flex w-full max-w-[600px] items-center justify-center gap-3 px-4 py-3">
 			<button
 				type="button"
 				onclick={shareOnX}

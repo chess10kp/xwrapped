@@ -69,7 +69,7 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center">
-	<div class="mx-auto w-full max-w-[600px] border-x border-[#2f3336] px-6 py-16">
+	<div class="w-full px-6 py-16">
 		<div class="flex flex-col items-center gap-8">
 			<!-- X Logo -->
 			<div class="text-6xl font-bold text-[#e7e9ea]">𝕏</div>

@@ -6,6 +6,10 @@
 
 ---
 
+The **xwrapped** app enriches each wrapped with **Exa** web search (via `exa-js` and `EXA_API_KEY` in `.env`) alongside Apify tweet data — see `searchWebContextForPerson` in `src/lib/server/exa.ts` and the pipeline in `src/lib/server/pipeline.ts`.
+
+---
+
 You are able to use the Svelte MCP server, where you have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:
 
 ## Available MCP Tools:
