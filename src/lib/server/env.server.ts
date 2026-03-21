@@ -9,9 +9,9 @@
  * then `configureMongoUri()` before touching the DB.
  */
 export {
-	ANTHROPIC_API_KEY,
 	APIFY_API_TOKEN,
 	DEMO_MODE,
 	MAGIC_HOUR_API_KEY,
-	MONGODB_URI
+	MONGODB_URI,
+	OPENROUTER_API_KEY
 } from '$env/static/private';

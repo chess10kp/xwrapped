@@ -1,4 +1,6 @@
 <script lang="ts">
+	const log = (...args: unknown[]) => console.log('[xwrapped/generate]', ...args);
+
 	let handle = $state('');
 	let isLoading = $state(false);
 	let error = $state('');
@@ -8,11 +10,13 @@
 		const cleanedHandle = handle.trim().replace(/^@/, '');
 
 		if (!cleanedHandle || !/^[a-zA-Z0-9_]{1,15}$/.test(cleanedHandle)) {
+			log('validation failed', { cleanedHandle: cleanedHandle || '(empty)' });
 			error = 'Please enter a valid X handle (e.g., elonmusk)';
 			return;
 		}
 
 		isLoading = true;
+		log('submit', { handle: cleanedHandle });
 
 		try {
 			const res = await fetch('/api/generate', {
@@ -21,14 +25,42 @@
 				body: JSON.stringify({ handle: cleanedHandle })
 			});
 
-			const data = await res.json();
+			const raw = await res.text();
+			log('response', {
+				status: res.status,
+				ok: res.ok,
+				contentType: res.headers.get('content-type'),
+				bodyLength: raw.length,
+				bodyPreview: raw.length > 800 ? `${raw.slice(0, 800)}…` : raw || '(empty)'
+			});
 
-			if (!res.ok) {
-				throw new Error(data.error || 'Failed to generate wrapped');
+			let payload: { id?: string; error?: string; detail?: string } = {};
+			try {
+				payload = raw ? (JSON.parse(raw) as typeof payload) : {};
+			} catch (parseErr) {
+				console.error('[xwrapped/generate] JSON parse failed', parseErr);
+				throw new Error(
+					res.ok
+						? 'Invalid response from server'
+						: `Request failed (${res.status}). Check the dev server logs.`
+				);
 			}
 
-			window.location.href = `/loading/${encodeURIComponent(data.id)}`;
+			if (!res.ok) {
+				log('request not ok', { error: payload.error, detail: payload.detail });
+				const hint = payload.detail ? ` ${payload.detail}` : '';
+				throw new Error((payload.error || 'Failed to generate wrapped') + hint);
+			}
+
+			if (!payload.id) {
+				log('missing id in success payload', payload);
+				throw new Error('Invalid response: missing job id');
+			}
+
+			log('redirect', { id: payload.id, path: `/loading/${encodeURIComponent(payload.id)}` });
+			window.location.href = `/loading/${encodeURIComponent(payload.id)}`;
 		} catch (err) {
+			console.error('[xwrapped/generate] error', err);
 			error = err instanceof Error ? err.message : 'Something went wrong';
 		} finally {
 			isLoading = false;

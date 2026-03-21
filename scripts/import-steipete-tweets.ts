@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { closeMongo, configureMongoUri } from '../src/lib/server/mongo-connection.js';
-import { parseTweetExportFile } from '../src/lib/server/parse-tweet-export.js';
+import {
+	parseBillGatesTweetExportFile,
+	parseTweetExportFile
+} from '../src/lib/server/parse-tweet-export.js';
 import { upsertTweetArchive } from '../src/lib/server/tweet-archive-db.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,12 +18,17 @@ if (!uri?.trim()) {
 }
 configureMongoUri(uri);
 
-const filePath = join(__dirname, '../steipete_tweets_2025.txt');
-const text = readFileSync(filePath, 'utf8');
-const { tweets, footer } = parseTweetExportFile(text);
+const sourceFile = process.argv[2] ?? 'steipete_tweets_2025.txt';
+const handle = process.argv[3] ?? 'steipete';
 
-const handle = 'steipete';
-const sourceFile = 'steipete_tweets_2025.txt';
+const filePath = join(__dirname, '..', sourceFile);
+const text = readFileSync(filePath, 'utf8');
+const parse =
+	sourceFile.toLowerCase().includes('billgates') ||
+	sourceFile.toLowerCase().includes('bill_gates')
+		? parseBillGatesTweetExportFile
+		: parseTweetExportFile;
+const { tweets, footer } = parse(text);
 const _id = `${handle}:${sourceFile}`;
 
 await upsertTweetArchive({

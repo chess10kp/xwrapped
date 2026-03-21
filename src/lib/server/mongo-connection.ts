@@ -41,6 +41,8 @@ export async function getDb(): Promise<Db> {
 			wrapped.createIndex({ status: 1 }),
 			db.collection('tweet_archives').createIndex({ handle: 1 }),
 			db.collection('tweet_archives').createIndex({ importedAt: -1 }),
+			db.collection('archive_media').createIndex({ handle: 1 }),
+			db.collection('archive_media').createIndex({ importedAt: -1 }),
 		]);
 		indexesEnsured = true;
 	}

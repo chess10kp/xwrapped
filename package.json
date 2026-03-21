@@ -12,6 +12,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"precache": "tsx scripts/precache.ts",
 		"import-tweets": "tsx scripts/import-steipete-tweets.ts",
+		"import-tweets:billgates": "tsx scripts/import-steipete-tweets.ts billgates_tweets_2025.txt billgates",
+		"import:media": "tsx scripts/import-archive-media.ts",
 		"verify:mongo": "tsx scripts/verify-mongo-env.ts",
 		"encode:mongo-password": "tsx scripts/encode-mongo-password.ts"
 	},
@@ -31,7 +33,6 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
-		"@anthropic-ai/sdk": "^0.80.0",
 		"apify-client": "^2.22.3",
 		"magic-hour": "^0.55.0",
 		"mongodb": "^7.1.0"

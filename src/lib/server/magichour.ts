@@ -2,7 +2,19 @@ import { Client } from 'magic-hour';
 import { MAGIC_HOUR_API_KEY } from '$lib/server/env.server';
 import type { PersonalityAnalysis } from './types';
 
-const client = new Client({ token: MAGIC_HOUR_API_KEY });
+let client: Client | null = null;
+
+function getMagicHourClient(): Client {
+  if (client) return client;
+  const token = MAGIC_HOUR_API_KEY?.trim();
+  if (!token) {
+    throw new Error(
+      'MAGIC_HOUR_API_KEY is missing or empty. Add it to .env (see .env.example). https://magichour.ai/developer?tab=api-keys'
+    );
+  }
+  client = new Client({ token });
+  return client;
+}
 
 function buildVideoPrompt(analysis: PersonalityAnalysis, handle: string): string {
   return `Cinematic social media personality reveal video. ${analysis.colour_mood} visual aesthetic.
@@ -23,7 +35,7 @@ Style: Modern, high-energy social media aesthetic. Dark background with vibrant 
 export async function generateVideo(analysis: PersonalityAnalysis, handle: string) {
   const prompt = buildVideoPrompt(analysis, handle);
 
-  const result = await client.v1.textToVideo.generate({
+  const result = await getMagicHourClient().v1.textToVideo.generate({
     name: `X Wrapped - @${handle}`,
     style: {
       prompt,
@@ -36,7 +48,7 @@ export async function generateVideo(analysis: PersonalityAnalysis, handle: strin
 
 export async function waitForVideo(projectId: string): Promise<string> {
   while (true) {
-    const res = await client.v1.videoProjects.get({ id: projectId });
+    const res = await getMagicHourClient().v1.videoProjects.get({ id: projectId });
 
     if (res.status === 'complete') {
       return res.downloads[0].url;

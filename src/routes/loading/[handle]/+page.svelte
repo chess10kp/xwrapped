@@ -6,17 +6,42 @@
 	let { data } = $props<{ data: PageData }>();
 	let status = $state('scraping');
 	let analysis = $state<PersonalityAnalysis | null>(null);
+	let jobError = $state<string | null>(null);
 
 	$effect(() => {
 		const interval = setInterval(async () => {
 			try {
 				const res = await fetch(`/api/status/${encodeURIComponent(data.handle)}`);
-				const json = await res.json();
-				status = json.status;
+				const raw = await res.text();
+				let json: {
+					status?: string;
+					analysis?: PersonalityAnalysis;
+					error?: string;
+				} = {};
+				try {
+					json = raw ? (JSON.parse(raw) as typeof json) : {};
+				} catch {
+					jobError = `Could not read status (${res.status}).`;
+					status = 'error';
+					clearInterval(interval);
+					return;
+				}
+
+				if (!res.ok) {
+					jobError = json.error ?? `Request failed (${res.status})`;
+					status = 'error';
+					clearInterval(interval);
+					return;
+				}
+
+				status = json.status ?? status;
 				if (json.analysis) analysis = json.analysis;
 				if (json.status === 'complete') {
 					clearInterval(interval);
 					goto(`/profile/${encodeURIComponent(data.handle)}`);
+				} else if (json.status === 'error') {
+					jobError = json.error ?? 'Unknown error';
+					clearInterval(interval);
 				}
 			} catch (err) {
 				console.error('Polling error:', err);
@@ -97,6 +122,9 @@
 			{:else if status === 'error'}
 				<div class="text-6xl">❌</div>
 				<p class="text-xl text-[#e7e9ea]">{getStatusText()}</p>
+				{#if jobError}
+					<p class="max-w-md text-sm text-[#71767b]">{jobError}</p>
+				{/if}
 				<a href="/" class="text-[#1d9bf0] transition-colors hover:underline">Try again</a>
 
 			{:else}

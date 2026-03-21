@@ -1,8 +1,32 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { ANTHROPIC_API_KEY } from '$lib/server/env.server';
+import { OPENROUTER_API_KEY } from '$lib/server/env.server';
 import type { ProfileData, TweetData, PersonalityAnalysis } from './types';
 
-const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+/** OpenRouter free-tier router — https://openrouter.ai/docs/guides/routing/routers/free-models-router */
+const MODEL = 'openrouter/free';
+
+function getOpenRouterKey(): string {
+  const apiKey = OPENROUTER_API_KEY?.trim();
+  if (!apiKey) {
+    throw new Error(
+      'OPENROUTER_API_KEY is missing or empty. Add it to .env (see .env.example). https://openrouter.ai/keys'
+    );
+  }
+  return apiKey;
+}
+
+function parsePersonalityJson(text: string): PersonalityAnalysis {
+  const trimmed = text.trim();
+  try {
+    return JSON.parse(trimmed) as PersonalityAnalysis;
+  } catch {
+    const match = trimmed.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]) as PersonalityAnalysis;
+    }
+    throw new Error('Model did not return valid JSON for personality analysis');
+  }
+}
 
 function buildPrompt(profile: ProfileData, tweets: TweetData[]): string {
   const tweetTexts = tweets
@@ -42,19 +66,46 @@ export async function analysePersonality(
   profile: ProfileData,
   tweets: TweetData[]
 ): Promise<PersonalityAnalysis> {
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1024,
-    messages: [{
-      role: 'user',
-      content: buildPrompt(profile, tweets),
-    }],
+  const res = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getOpenRouterKey()}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://github.com/xwrapped',
+      'X-Title': 'xwrapped'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: buildPrompt(profile, tweets) }]
+    })
   });
-  
-  const content = response.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Anthropic API');
+
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(`OpenRouter API error ${res.status}: ${raw}`);
   }
-  
-  return JSON.parse(content.text) as PersonalityAnalysis;
+
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error('OpenRouter returned non-JSON response');
+  }
+
+  const payload = data as {
+    choices?: Array<{ message?: { content?: string | null } }>;
+    error?: { message?: string };
+  };
+
+  if (payload.error?.message) {
+    throw new Error(`OpenRouter: ${payload.error.message}`);
+  }
+
+  const text = payload.choices?.[0]?.message?.content;
+  if (typeof text !== 'string' || !text.trim()) {
+    throw new Error('Unexpected response shape from OpenRouter API');
+  }
+
+  return parsePersonalityJson(text);
 }
