@@ -10,6 +10,6 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 </svelte:head>
 
-<div class="min-h-screen bg-primary text-text">
+<div class="min-h-screen bg-base-100 text-base-content" data-theme="xwrapped">
 	{@render children()}
 </div>

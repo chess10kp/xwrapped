@@ -36,41 +36,55 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center p-4">
-	<div class="w-full max-w-md space-y-8">
-		<div class="text-center">
-			<h1 class="text-5xl font-bold text-accent">X Wrapped</h1>
-			<p class="mt-2 text-text/70">Discover your X personality archetype</p>
-		</div>
+<div class="hero min-h-screen bg-base-100">
+	<div class="hero-content w-full max-w-md flex-col px-4 py-8">
+		<div class="card bg-base-200 shadow-xl w-full">
+			<div class="card-body gap-6">
+				<div class="text-center">
+					<h1 class="card-title justify-center text-4xl text-primary">X Wrapped</h1>
+					<p class="text-base-content/70">Discover your X personality archetype</p>
+				</div>
 
-		<div class="space-y-4">
-			<div>
-				<label for="handle" class="sr-only">X Handle</label>
-				<div class="relative">
-					<span class="absolute left-3 top-1/2 -translate-y-1/2 text-text/50">@</span>
-					<input
-						id="handle"
-						type="text"
-						bind:value={handle}
-						placeholder="elonmusk"
+				<div class="form-control w-full gap-4">
+					<div>
+						<label class="label" for="handle">
+							<span class="label-text sr-only">X Handle</span>
+						</label>
+						<div class="join w-full">
+							<span class="btn btn-disabled join-item shrink-0">@</span>
+							<input
+								id="handle"
+								type="text"
+								bind:value={handle}
+								placeholder="elonmusk"
+								disabled={isLoading}
+								class="input input-bordered join-item w-full min-w-0"
+								onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
+							/>
+						</div>
+					</div>
+
+					{#if error}
+						<div role="alert" class="alert alert-error text-sm">
+							<span>{error}</span>
+						</div>
+					{/if}
+
+					<button
+						type="button"
+						onclick={handleSubmit}
 						disabled={isLoading}
-						class="w-full rounded-lg bg-surface px-4 py-3 pl-8 text-text placeholder:text-text/50 focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
-						onkeydown={(e) => e.key === 'Enter' && handleSubmit()}
-					/>
+						class="btn btn-primary btn-block"
+					>
+						{#if isLoading}
+							<span class="loading loading-spinner"></span>
+							Generating...
+						{:else}
+							Generate My Wrapped
+						{/if}
+					</button>
 				</div>
 			</div>
-
-			{#if error}
-				<p class="text-red-400 text-sm">{error}</p>
-			{/if}
-
-			<button
-				onclick={handleSubmit}
-				disabled={isLoading}
-				class="w-full rounded-lg bg-accent px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-			>
-				{isLoading ? 'Generating...' : 'Generate My Wrapped'}
-			</button>
 		</div>
 	</div>
 </div>
