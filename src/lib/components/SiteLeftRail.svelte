@@ -17,7 +17,7 @@
 
 {#if profileWrappedLoad}
 	<aside
-		class="hidden w-[350px] shrink-0 flex-col border-r border-[#2f3336] py-2 pl-6 pr-4 sm:flex lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain"
+		class="hidden w-[350px] shrink-0 flex-col border-r border-[#2f3336] py-3 pl-6 pr-4 sm:flex lg:h-full lg:min-h-0 lg:overflow-y-auto lg:overscroll-y-contain"
 		aria-label="Wrapped highlights and engagement"
 	>
 		<div class="flex flex-col gap-4 pb-4 pl-1">
